@@ -16,7 +16,7 @@
         .nav-brand { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: var(--primary); letter-spacing: 2px; }
         .nav-links { display: flex; gap: 10px; }
         
-        .nav-btn { background-color: transparent; border: none; padding: 20px 15px; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.3s ease; }
+        .nav-btn { background-color: transparent; border: none; padding: 20px 15px; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.3s ease; white-space: nowrap; }
         .nav-btn:hover { color: var(--accent); background-color: transparent; }
         .nav-btn.active { color: var(--primary); border-bottom-color: var(--accent); cursor: default; background-color: transparent; }
         .nav-btn.active:hover { color: var(--primary); background-color: transparent; }
@@ -65,6 +65,30 @@
         .amount-pos { color: #2e7d32; font-weight: 600; }
         .amount-neg { color: #c62828; font-weight: 600; }
         .empty-state { text-align: center; padding: 30px; color: #888; font-style: italic; }
+
+        /* --- NEW: Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
+            
+            /* Stack the grids vertically */
+            .dashboard-grid { grid-template-columns: 1fr; gap: 15px; }
+            .split-grid { grid-template-columns: 1fr; gap: 20px; }
+            
+            /* Adjust navigation for small screens */
+            .top-nav { flex-direction: column; padding: 10px 15px 0; gap: 10px; }
+            .nav-links { width: 100%; display: flex; justify-content: space-between; overflow-x: auto; padding-bottom: 5px; }
+            .nav-btn { padding: 12px 10px; font-size: 0.8rem; }
+            
+            /* Adjust headers and buttons */
+            .page-title { font-size: 1.5rem; margin-bottom: 20px; }
+            .controls-header { flex-direction: column; gap: 15px; align-items: stretch; padding: 15px; }
+            .month-selector { justify-content: space-between; }
+            .btn-export { width: 100%; text-align: center; }
+            
+            /* Tweak tables so they fit better */
+            table { font-size: 0.8rem; display: block; overflow-x: auto; white-space: nowrap; }
+            th, td { padding: 12px 8px; }
+        }
 
         /* Print Styles */
         @media print {
@@ -219,11 +243,9 @@
     </div>
 
     <script type="module">
-        // 1. Import Firebase Core and Firestore
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // 2. Your Secure Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDDAg0bLMj4hUsZ5PGGDqKyj5KwAQmMcNw",
             authDomain: "boutique-app-d2693.firebaseapp.com",
@@ -234,29 +256,23 @@
             measurementId: "G-ZT35PE3RWF"
         };
 
-        // 3. Initialize the App and Database Connection
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 4. Set up references to your database collections (like folders)
         const transactionsRef = collection(db, "transactions");
         const salariesRef = collection(db, "salaries");
 
-        // App Data Storage
         let transactions = [];
         let salaries = [];
 
-        // Formatting Helpers
         const formatMoney = (amount) => '₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
-        // Default Dates Setup
         const today = new Date();
         document.getElementById('view-month').value = today.toISOString().slice(0, 7);
         document.getElementById('t-date').value = today.toISOString().slice(0, 10);
         document.getElementById('s-date').value = today.toISOString().slice(0, 10);
 
-        // --- CORE LOGIC: Render the App ---
         window.renderApp = function() {
             const selectedMonth = document.getElementById('view-month').value;
 
@@ -297,7 +313,6 @@
             netElement.style.color = net >= 0 ? '#2e7d32' : '#c62828';
         };
 
-        // --- CLOUD SYNCING: Listen for data changes in real-time ---
         onSnapshot(transactionsRef, (snapshot) => {
             transactions = snapshot.docs.map(doc => doc.data());
             window.renderApp();
@@ -308,7 +323,6 @@
             window.renderApp();
         });
 
-        // --- ADDING DATA TO THE CLOUD ---
         window.addTransaction = async function() {
             const date = document.getElementById('t-date').value;
             const desc = document.getElementById('t-desc').value;
@@ -317,7 +331,6 @@
             
             if (!date || !desc || isNaN(amount)) return alert("Please fill out all transaction fields.");
             
-            // Push to Firestore!
             await addDoc(transactionsRef, { date, desc, category, amount });
             
             document.getElementById('t-desc').value = '';
@@ -331,14 +344,12 @@
             
             if (!date || !name || isNaN(amount)) return alert("Please fill out all salary fields.");
             
-            // Push to Firestore!
             await addDoc(salariesRef, { date, name, amount });
             
             document.getElementById('s-name').value = '';
             document.getElementById('s-amount').value = '';
         };
 
-        // Navigation Logic (Made accessible to the window)
         window.switchTab = function(tabId, btnElement) {
             document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
