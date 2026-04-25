@@ -72,7 +72,36 @@
         
         const today = new Date();
         document.getElementById('view-month').value = today.toISOString().slice(0, 7);
+        // --- PDF EXPORT ENGINE ---
+        window.downloadPDF = function() {
+            // 1. Grab the elements we want to hide from the PDF
+            const controls = document.querySelector('.controls-header');
+            const actionCells = document.querySelectorAll('.action-cell');
+            
+            // 2. Temporarily hide them
+            if(controls) controls.style.display = 'none';
+            actionCells.forEach(cell => cell.style.display = 'none');
 
+            // 3. Select the area of the page we want to turn into a PDF
+            const element = document.querySelector('.container');
+            const currentMonth = document.getElementById('view-month').value;
+
+            // 4. Set the PDF quality and formatting rules
+            const opt = {
+                margin:       0.5,
+                filename:     `Lumiere_Financial_Report_${currentMonth}.pdf`,
+                image:        { type: 'jpeg', quality: 1 }, // Max quality
+                html2canvas:  { scale: 2, useCORS: true },  // High resolution
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // 5. Generate and download the PDF!
+            html2pdf().set(opt).from(element).save().then(() => {
+                // 6. Put the buttons back on the screen after the download finishes
+                if(controls) controls.style.display = 'flex';
+                actionCells.forEach(cell => cell.style.display = '');
+            });
+        };
         window.renderApp = function() {
             const selectedMonth = document.getElementById('view-month').value;
             const monthTransactions = transactions.filter(t => t.date.startsWith(selectedMonth));
