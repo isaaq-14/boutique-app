@@ -8,7 +8,6 @@ body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var
 .nav-brand { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; color: var(--primary); letter-spacing: 2px; }
 .nav-links { display: flex; gap: 10px; }
 
-/* Using <a> tags now instead of buttons for navigation */
 .nav-btn { background-color: transparent; border: none; padding: 20px 15px; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.3s ease; white-space: nowrap; text-decoration: none; display: inline-block;}
 .nav-btn:hover { color: var(--accent); background-color: transparent; }
 .nav-btn.active { color: var(--primary); border-bottom-color: var(--accent); cursor: default; background-color: transparent; }
@@ -64,19 +63,33 @@ th { color: #888; font-weight: 600; text-transform: uppercase; font-size: 0.75re
 .amount-neg { color: #c62828; font-weight: 600; }
 .empty-state { text-align: center; padding: 30px; color: #888; font-style: italic; }
 
-/* Mobile Responsiveness */
+/* --- STRONGER MOBILE RESPONSIVENESS --- */
 @media (max-width: 768px) {
-    .container { padding: 20px 15px; }
-    .dashboard-grid, .split-grid { grid-template-columns: 1fr; gap: 15px; }
-    .top-nav { flex-direction: column; padding: 10px 15px 0; gap: 10px; }
+    .container { padding: 15px 10px; }
+    
+    /* Stack grids vertically */
+    .dashboard-grid, .split-grid { grid-template-columns: 1fr; gap: 20px; }
+    
+    /* Shrink the bulky cards for mobile */
+    .card { padding: 15px; margin-bottom: 20px; }
+    
+    /* Stack side-by-side buttons cleanly */
+    .btn-group { flex-direction: column; gap: 10px; }
+    
+    /* Adjust navigation */
+    .top-nav { flex-direction: column; padding: 10px 10px 0; gap: 5px; }
     .nav-links { width: 100%; display: flex; justify-content: space-between; overflow-x: auto; padding-bottom: 5px; }
-    .nav-btn { padding: 12px 10px; font-size: 0.8rem; }
-    .page-title { font-size: 1.5rem; margin-bottom: 20px; }
+    .nav-btn { padding: 12px 5px; font-size: 0.75rem; }
+    
+    /* Adjust headers */
+    .page-title { font-size: 1.5rem; margin-bottom: 20px; text-align: center; }
     .controls-header { flex-direction: column; gap: 15px; align-items: stretch; padding: 15px; }
     .month-selector { justify-content: space-between; }
     .btn-export { width: 100%; text-align: center; }
-    table { font-size: 0.8rem; display: block; overflow-x: auto; white-space: nowrap; }
-    th, td { padding: 12px 8px; }
+    
+    /* Bulletproof Table Fix: Allows horizontal swiping instead of breaking layout */
+    table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; font-size: 0.85rem; }
+    th, td { padding: 12px 10px; }
 }
 
 @media print {
