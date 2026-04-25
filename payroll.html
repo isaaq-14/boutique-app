@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payroll | Lumière Boutique</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=5"> 
+    <link rel="stylesheet" href="style.css?v=6"> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -97,33 +97,28 @@
         document.getElementById('view-month').value = today.toISOString().slice(0, 7);
         document.getElementById('s-date').value = today.toISOString().slice(0, 10);
         // --- PDF EXPORT ENGINE ---
+        // --- PDF EXPORT ENGINE ---
         window.downloadPDF = function() {
-            // 1. Grab the elements we want to hide from the PDF
-            const controls = document.querySelector('.controls-header');
-            const actionCells = document.querySelectorAll('.action-cell');
-            
-            // 2. Temporarily hide them
-            if(controls) controls.style.display = 'none';
-            actionCells.forEach(cell => cell.style.display = 'none');
+            // 1. Turn on "PDF Mode" (Hides the forms, buttons, and stretches the tables)
+            document.body.classList.add('pdf-export-mode');
 
-            // 3. Select the area of the page we want to turn into a PDF
+            // 2. Select the area of the page we want to capture
             const element = document.querySelector('.container');
             const currentMonth = document.getElementById('view-month').value;
 
-            // 4. Set the PDF quality and formatting rules
+            // 3. Set the PDF quality and formatting rules
             const opt = {
                 margin:       0.5,
                 filename:     `Lumiere_Financial_Report_${currentMonth}.pdf`,
-                image:        { type: 'jpeg', quality: 1 }, // Max quality
-                html2canvas:  { scale: 2, useCORS: true },  // High resolution
+                image:        { type: 'jpeg', quality: 1 }, 
+                html2canvas:  { scale: 2, useCORS: true },  
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            // 5. Generate and download the PDF!
+            // 4. Generate and download the PDF!
             html2pdf().set(opt).from(element).save().then(() => {
-                // 6. Put the buttons back on the screen after the download finishes
-                if(controls) controls.style.display = 'flex';
-                actionCells.forEach(cell => cell.style.display = '');
+                // 5. Instantly turn off "PDF Mode" to return the screen to normal
+                document.body.classList.remove('pdf-export-mode');
             });
         };
         window.renderApp = function() {

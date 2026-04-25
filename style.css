@@ -131,3 +131,14 @@ html, body {
     .split-grid { grid-template-columns: 1fr; }
     .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; margin-bottom: 20px; overflow: visible; }
 }
+/* --- PDF EXPORT STATE --- */
+body.pdf-export-mode .no-print,
+body.pdf-export-mode .controls-header,
+body.pdf-export-mode .action-cell {
+    display: none !important;
+}
+
+/* Force the grid to become a single, full-width column for the table */
+body.pdf-export-mode .split-grid {
+    grid-template-columns: 1fr !important;
+}
