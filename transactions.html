@@ -160,7 +160,12 @@
         onSnapshot(collection(db, "master_articles"), (snap) => {
             let opts = '<option value="">-- Select Article --</option>';
             snap.docs.forEach(doc => { const a = doc.data(); opts += `<option value="${a.code}">${a.name} [${a.code}]</option>`; });
-            document.getElementById('wp-article').innerHTML = opts;
+            
+            // Fills the Worker Payment dropdown
+            document.getElementById('wp-article').innerHTML = opts; 
+            
+            // ADD THIS LINE: Fills the Sales Invoice dropdown
+            document.getElementById('inv-article').innerHTML = opts; 
         });
 
         onSnapshot(collection(db, "master_clients"), (snap) => {
