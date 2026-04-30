@@ -6,6 +6,9 @@
     <title>Financials | Muggun Boutique</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=6"> 
+    <!-- Remove html2pdf and add pdfMake -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 </head>
 <body>
 
@@ -183,21 +186,163 @@
             const article = document.getElementById('inv-article').value;
             const qty = parseInt(document.getElementById('inv-qty').value);
             const rate = parseFloat(document.getElementById('inv-rate').value);
+            
             if (!invoiceNo || isNaN(qty) || isNaN(rate)) return alert("Fill required invoice fields.");
-            await addDoc(collection(db, "erp_invoices"), { date, invoiceNo, linkedSO, article, qty, rate, total: qty * rate });
-            alert("Invoice Logged!");
+            
+            const totalAmount = qty * rate;
+            const formatMoney = (amt) => '₹' + amt.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+            // 1. Save to Database
+            await addDoc(collection(db, "erp_invoices"), { date, invoiceNo, linkedSO, article, qty, rate, total: totalAmount });
+            
+            // 2. Define the Native PDF Receipt
+            if(confirm("Invoice Saved! Download official PDF Receipt?")) {
+                const docDefinition = {
+                    content: [
+                        { text: 'MUGGUN BOUTIQUE', style: 'header', alignment: 'center' },
+                        { text: 'Tax Invoice / Bill of Supply\n\n', style: 'subheader', alignment: 'center' },
+                        
+                        // Invoice Meta Data
+                        {
+                            columns: [
+                                { text: `Invoice No: ${invoiceNo}\nDate: ${new Date(date).toLocaleDateString('en-IN')}`, width: '*' },
+                                { text: `Linked Order: ${linkedSO || 'N/A'}`, width: '*', alignment: 'right' }
+                            ]
+                        },
+                        { text: '\n' }, // Spacing
+                        
+                        // The Items Table
+                        {
+                            table: {
+                                headerRows: 1,
+                                widths: ['*', 'auto', 'auto', 'auto'],
+                                body: [
+                                    // Table Header
+                                    [
+                                        { text: 'Article Code', bold: true, fillColor: '#eeeeee' },
+                                        { text: 'Quantity', bold: true, fillColor: '#eeeeee' },
+                                        { text: 'Rate', bold: true, fillColor: '#eeeeee' },
+                                        { text: 'Total', bold: true, alignment: 'right', fillColor: '#eeeeee' }
+                                    ],
+                                    // Table Row Data
+                                    [
+                                        article,
+                                        `${qty} Units`,
+                                        formatMoney(rate),
+                                        { text: formatMoney(totalAmount), alignment: 'right' }
+                                    ],
+                                    // Empty row for spacing
+                                    ['', '', '', ''],
+                                    // Total Row
+                                    [
+                                        { text: 'Grand Total', bold: true, colSpan: 3, alignment: 'right' }, 
+                                        {}, 
+                                        {}, 
+                                        { text: formatMoney(totalAmount), bold: true, alignment: 'right' }
+                                    ]
+                                ]
+                            },
+                            layout: 'lightHorizontalLines'
+                        },
+                        
+                        // Footer signature
+                        { text: '\n\n\n\n' },
+                        { text: '_________________________', alignment: 'right' },
+                        { text: 'Authorized Signatory', alignment: 'right', margin: [0, 5, 10, 0] }
+                    ],
+                    styles: {
+                        header: { fontSize: 24, bold: true, margin: [0, 0, 0, 5] },
+                        subheader: { fontSize: 12, color: '#666666' }
+                    },
+                    defaultStyle: {
+                        font: 'Roboto'
+                    }
+                };
+
+                // Generate and download the crisp PDF
+                pdfMake.createPdf(docDefinition).download(`${invoiceNo}_Muggun_Boutique.pdf`);
+            }
+
+            // 3. Clear the form
             document.querySelectorAll('#inv-no, #inv-so, #inv-qty, #inv-rate').forEach(el => el.value = '');
         };
 
         window.saveReceipt = async function() {
             const date = document.getElementById('rec-date').value;
             const client = document.getElementById('rec-client').value;
-            const invoiceNo = document.getElementById('rec-inv').value;
+            const invoiceNo = document.getElementById('rec-inv').value || 'Advance / Unlinked';
             const amount = parseFloat(document.getElementById('rec-amount').value);
             const mode = document.getElementById('rec-mode').value;
+            
             if (!client || isNaN(amount)) return alert("Fill required receipt fields.");
+            
+            const formatMoney = (amt) => '₹' + amt.toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+            // 1. Save to Database
             await addDoc(collection(db, "erp_receipts"), { date, client, invoiceNo, amount, mode });
-            alert("Receipt Logged!");
+            
+            // 2. Define the Native PDF Receipt
+            if(confirm("Payment Logged! Download official PDF Receipt?")) {
+                const docDefinition = {
+                    content: [
+                        { text: 'MUGGUN BOUTIQUE', style: 'header', alignment: 'center' },
+                        { text: 'Payment Receipt\n\n', style: 'subheader', alignment: 'center' },
+                        
+                        // Receipt Meta Data
+                        {
+                            columns: [
+                                { text: `Date: ${new Date(date).toLocaleDateString('en-IN')}\nMode: ${mode}`, width: '*' },
+                                { text: `Linked Invoice: ${invoiceNo}`, width: '*', alignment: 'right' }
+                            ]
+                        },
+                        { text: '\n\n' }, 
+                        
+                        // Main Content Table
+                        {
+                            table: {
+                                widths: ['*', 'auto'],
+                                body: [
+                                    [{ text: 'Received From', bold: true, fillColor: '#eeeeee', margin: [5, 5, 5, 5] }, { text: 'Amount', bold: true, alignment: 'right', fillColor: '#eeeeee', margin: [5, 5, 5, 5] }],
+                                    [
+                                        { text: client, margin: [5, 15, 5, 15] },
+                                        { text: formatMoney(amount), alignment: 'right', fontSize: 16, bold: true, margin: [5, 15, 5, 15] }
+                                    ]
+                                ]
+                            },
+                            layout: 'lightHorizontalLines'
+                        },
+
+                        { text: '\nThank you for your business!', alignment: 'center', color: '#888888', italics: true },
+                        
+                        // Footer signatures (Receipts usually have two)
+                        { text: '\n\n\n\n' },
+                        {
+                            columns: [
+                                { text: '_________________________', alignment: 'left' },
+                                { text: '_________________________', alignment: 'right' }
+                            ]
+                        },
+                        {
+                            columns: [
+                                { text: 'Customer Signature', alignment: 'left', margin: [0, 5, 0, 0], color: '#666' },
+                                { text: 'Authorized Signatory', alignment: 'right', margin: [0, 5, 10, 0], color: '#666' }
+                            ]
+                        }
+                    ],
+                    styles: {
+                        header: { fontSize: 24, bold: true, margin: [0, 0, 0, 5] },
+                        subheader: { fontSize: 14, color: '#666666' }
+                    },
+                    defaultStyle: {
+                        font: 'Roboto'
+                    }
+                };
+
+                // Generate and download the crisp PDF
+                pdfMake.createPdf(docDefinition).download(`Receipt_${client.replace(/\s+/g, '_')}_${date}.pdf`);
+            }
+
+            // 3. Clear the form
             document.querySelectorAll('#rec-inv, #rec-amount').forEach(el => el.value = '');
         };
 
