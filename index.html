@@ -133,6 +133,23 @@
             document.getElementById('rep-received').innerText = formatMoney(totalReceived);
             document.getElementById('rep-outstanding').innerText = formatMoney(totalInvoiced - totalReceived);
 
+            // --- EXECUTIVE P&L SYNC ---
+            // 1. Calculate Total Costs (Worker Pay + Shop Expenses)
+            const totalWorkerPay = mWorkers.reduce((sum, w) => sum + w.total, 0);
+            const totalShopExp = mExpenses.reduce((sum, ex) => sum + ex.amount, 0);
+            const totalCosts = totalWorkerPay + totalShopExp;
+            
+            // 2. Calculate Net Profit
+            const netProfit = totalInvoiced - totalCosts;
+
+            // 3. Update the Top Cards (Make sure these IDs match your HTML!)
+            document.getElementById('pl-revenue').innerText = formatMoney(totalInvoiced);
+            document.getElementById('pl-costs').innerText = formatMoney(totalCosts);
+            document.getElementById('pl-profit').innerText = formatMoney(netProfit);
+            
+            // Optional: Make Profit turn red if it's negative!
+            document.getElementById('pl-profit').style.color = netProfit < 0 ? '#d32f2f' : '#333';
+
             // --- REPORT A: ARTICLE-WISE REPORT ---
             const articleStats = {};
             mSO.forEach(so => { articleStats[so.article] = articleStats[so.article] || {o:0, p:0, s:0}; articleStats[so.article].o += so.qty; });
