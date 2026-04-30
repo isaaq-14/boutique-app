@@ -115,25 +115,25 @@
         const formatMoney = (amount) => '₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         // --- 1. RELATIONAL DATABASE PULLS (Populating Dropdowns) ---
-        onSnapshot(collection(db, "clients"), (snap) => {
+       // --- 1. RELATIONAL DATABASE PULLS (Populating Dropdowns) ---
+        onSnapshot(collection(db, "master_clients"), (snap) => {
             let opts = '<option value="">-- Select Client --</option>';
-            snap.docs.forEach(doc => { const c = doc.data(); opts += `<option value="${c.name}">${c.name} (${c.cid})</option>`; });
+            snap.docs.forEach(doc => { const c = doc.data(); opts += `<option value="${c.name}">${c.name}</option>`; });
             document.getElementById('so-client').innerHTML = opts;
         });
 
-        onSnapshot(collection(db, "articles"), (snap) => {
+        onSnapshot(collection(db, "master_articles"), (snap) => {
             let opts = '<option value="">-- Select Article --</option>';
             snap.docs.forEach(doc => { const a = doc.data(); opts += `<option value="${a.code}">${a.name} [${a.code}]</option>`; });
             document.getElementById('so-article').innerHTML = opts;
             document.getElementById('po-article').innerHTML = opts;
         });
 
-        onSnapshot(collection(db, "workers"), (snap) => {
+        onSnapshot(collection(db, "master_workers"), (snap) => {
             let opts = '<option value="">-- Select Worker --</option>';
             snap.docs.forEach(doc => { const w = doc.data(); opts += `<option value="${w.name}">${w.name} - ${w.type}</option>`; });
             document.getElementById('po-worker').innerHTML = opts;
         });
-
         // --- 2. SALES ORDERS ---
         onSnapshot(query(collection(db, "sales_orders"), orderBy("date", "desc")), (snap) => {
             const list = document.getElementById('so-list');
