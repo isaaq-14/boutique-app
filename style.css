@@ -1,144 +1,150 @@
-/* Import Google Fonts for a professional look */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
+/* Import Luxury Typography */
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@300;400;600&display=swap');
 
 :root {
-    --primary: #2e7d32; /* Deep Boutique Green */
-    --accent: #d4af37;  /* Gold accent */
-    --bg: #f8f9fa;
-    --card-bg: #ffffff;
-    --text-main: #2c3e50;
-    --text-muted: #7f8c8d;
-    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --bg-color: #0f0f0f;      /* Deep Matte Black */
+    --surface: #1a1a1a;       /* Dark Grey Cards */
+    --accent: #d4af37;        /* Metallic Gold */
+    --text-bright: #ffffff;
+    --text-dim: #a0a0a0;
+    --danger: #ff4d4d;
+    --success: #00c853;
 }
 
 body {
-    background-color: var(--bg);
-    font-family: 'Inter', sans-serif;
-    color: var(--text-main);
+    background-color: var(--bg-color);
+    color: var(--text-bright);
+    font-family: 'Montserrat', sans-serif;
     margin: 0;
-    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Elegant Header Styling */
-h1, h2, h3 {
-    font-family: 'Playfair Display', serif;
-    color: #1a1a1a;
+/* Luxury Header */
+h1, h2, .logo {
+    font-family: 'Bodoni Moda', serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 300;
 }
 
 nav {
-    background: #ffffff;
-    padding: 1rem 2rem;
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #333;
+    padding: 1.5rem;
     display: flex;
-    justify-content: space-around;
-    box-shadow: var(--shadow);
+    justify-content: center;
+    gap: 40px;
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 100;
 }
 
 nav a {
+    color: var(--text-dim);
     text-decoration: none;
-    color: var(--text-muted);
-    font-weight: 600;
-    transition: color 0.3s;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    transition: 0.4s ease;
 }
 
 nav a:hover, nav a.active {
-    color: var(--primary);
-    border-bottom: 2px solid var(--primary);
+    color: var(--accent);
 }
 
-/* Container Spacing */
 .container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 20px;
+    max-width: 1100px;
+    margin: 4rem auto;
+    padding: 0 2rem;
 }
 
-/* Card Styling Upgrade */
+/* Editorial Cards */
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
 }
 
 .card {
-    background: var(--card-bg);
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    border-top: 4px solid var(--primary); /* Keeps your color-coding logic */
-    transition: transform 0.2s ease;
+    background: var(--surface);
+    border: 1px solid #333;
+    padding: 2.5rem;
+    border-radius: 0; /* Sharp edges look more high-fashion */
+    text-align: center;
+    transition: border-color 0.4s;
 }
 
 .card:hover {
-    transform: translateY(-5px);
+    border-color: var(--accent);
 }
 
 .card p {
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
 }
 
 .card h2 {
+    font-size: 2.2rem;
     margin: 0;
-    font-size: 1.8rem;
+    color: var(--accent);
 }
 
-/* Table Styling for a cleaner look */
+/* Sophisticated Tables */
 table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
+    margin-top: 2rem;
+    border: 1px solid #333;
 }
 
 th {
-    background: #f1f3f5;
-    padding: 15px;
     text-align: left;
-    font-weight: 600;
-    color: var(--text-muted);
+    padding: 1.2rem;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--accent);
+    border-bottom: 1px solid #333;
+    text-transform: uppercase;
 }
 
 td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
+    padding: 1.2rem;
+    border-bottom: 1px solid #222;
+    font-size: 0.9rem;
+    color: var(--text-dim);
 }
 
-/* Form Polish */
-input, select, button {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    box-sizing: border-box;
-}
-
+/* Interaction Elements */
 button {
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    font-weight: 600;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 1rem 2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.4s;
+    margin-top: 1rem;
 }
 
 button:hover {
-    background-color: #1b5e20;
+    background: var(--accent);
+    color: #000;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .card-grid {
-        grid-template-columns: 1fr;
-    }
+input, select {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #444;
+    color: white;
+    padding: 1rem 0;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+input:focus {
+    outline: none;
+    border-bottom: 1px solid var(--accent);
 }
