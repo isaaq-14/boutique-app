@@ -3,57 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Lumière Boutique</title>
+    <title>Dashboard | Muggun Boutique ERP</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=6"> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
-<nav class="top-nav">
-    <div class="nav-brand">MUGGUN BOUTIQUE</div>
-    <div class="nav-links">
-        <a href="index.html" class="nav-btn">Dashboard</a>
-        <a href="masters.html" class="nav-btn">Master Data</a>
-        <a href="production.html" class="nav-btn">Production</a>
-        <a href="transactions.html" class="nav-btn">Financials</a>
-    </div>
-</nav>
+    <nav class="top-nav">
+        <div class="nav-brand">MUGGUN BOUTIQUE</div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-btn active">Dashboard</a>
+            <a href="masters.html" class="nav-btn">Master Data</a>
+            <a href="production.html" class="nav-btn">Production</a>
+            <a href="transactions.html" class="nav-btn">Financials</a>
+        </div>
+    </nav>
 
     <div class="container">
+        
         <div class="controls-header no-print">
             <div class="month-selector">
-                <label for="view-month" style="margin: 0;">Viewing Month:</label>
-                <input type="month" id="view-month" onchange="renderApp()">
+                <label for="view-month" style="margin: 0;">Financial Month:</label>
+                <input type="month" id="view-month" onchange="renderDashboard()">
             </div>
-            <button class="btn-export" onclick="downloadPDF()">Download .PDF Report</button>
+            <button class="btn-export" onclick="window.print()">Export P&L Report</button>
         </div>
 
-        <h2 class="page-title">Financial Overview</h2>
+        <h2 class="page-title">Executive Profit & Loss (P&L)</h2>
+        
+        <!-- TOP LEVEL METRICS -->
         <div class="dashboard-grid">
-            <div class="card stat-card">
-                <h3>Monthly Revenue</h3>
-                <p class="amount-pos" id="total-income">₹0.00</p>
+            <div class="card stat-card" style="border-top: 4px solid #2e7d32;">
+                <h3>Total Sales (Revenue)</h3>
+                <p class="amount-pos" id="metric-revenue">₹0.00</p>
             </div>
-            <div class="card stat-card">
-                <h3>Monthly Expenses</h3>
-                <p class="amount-neg" id="total-expenses">₹0.00</p>
+            <div class="card stat-card" style="border-top: 4px solid #c62828;">
+                <h3>Total Operational Costs</h3>
+                <p class="amount-neg" id="metric-costs">₹0.00</p>
             </div>
-            <div class="card stat-card">
-                <h3>Net Monthly Profit</h3>
-                <p id="net-balance">₹0.00</p>
+            <div class="card stat-card" style="border-top: 4px solid var(--accent);">
+                <h3>Net Profit</h3>
+                <p id="metric-profit">₹0.00</p>
             </div>
         </div>
-        <!-- <div class="card">
-            <h2>Quick Summary</h2>
-            <p style="color: #666;">This dashboard pulls live data from your secure cloud database. Navigate to the Transactions or Payroll tabs to log new entries.</p>
-        </div> -->
+
+        <div class="split-grid">
+            <!-- COST BREAKDOWN -->
+            <div>
+                <div class="card">
+                    <h2>Cost Breakdown</h2>
+                    <table style="margin-top: 0;">
+                        <tbody>
+                            <tr><td>Material Purchases</td><td id="cost-materials" class="amount-neg right-align">₹0.00</td></tr>
+                            <tr><td>Worker Piece-Rate (Labor)</td><td id="cost-labor" class="amount-neg right-align">₹0.00</td></tr>
+                            <tr><td>Staff Salary</td><td id="cost-salary" class="amount-neg right-align">₹0.00</td></tr>
+                            <tr><td>Shop Expenses (Rent/Elec/Etc)</td><td id="cost-expenses" class="amount-neg right-align">₹0.00</td></tr>
+                            <tr style="border-top: 2px solid #eee; font-weight: 600;">
+                                <td>Total Costs</td><td id="cost-total" class="amount-neg right-align">₹0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RECENT FINANCIAL ACTIVITY -->
+            <div>
+                <div class="card">
+                    <h2>Recent Financial Activity</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-log">
+                            <tr><td colspan="4" class="empty-state">Loading recent activity...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+        // PASTE YOUR FIREBASE CONFIG HERE
         const firebaseConfig = {
             apiKey: "AIzaSyDDAg0bLMj4hUsZ5PGGDqKyj5KwAQmMcNw",
             authDomain: "boutique-app-d2693.firebaseapp.com",
@@ -66,70 +106,88 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let transactions = [];
-        let salaries = [];
+        // Data Storage
+        let sales = [], purchases = [], workers = [], salaries = [], expenses = [];
 
         const formatMoney = (amount) => '₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
+        // Set Default Month
         const today = new Date();
         document.getElementById('view-month').value = today.toISOString().slice(0, 7);
-        // --- PDF EXPORT ENGINE ---
-        // --- PDF EXPORT ENGINE ---
-        window.downloadPDF = function() {
-            // 1. Turn on "PDF Mode" (Hides the forms, buttons, and stretches the tables)
-            document.body.classList.add('pdf-export-mode');
 
-            // 2. Select the area of the page we want to capture
-            const element = document.querySelector('.container');
-            const currentMonth = document.getElementById('view-month').value;
-
-            // 3. Set the PDF quality and formatting rules
-            const opt = {
-                margin:       0.5,
-                filename:     `Lumiere_Financial_Report_${currentMonth}.pdf`,
-                image:        { type: 'jpeg', quality: 1 }, 
-                html2canvas:  { scale: 2, useCORS: true },  
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            // 4. Generate and download the PDF!
-            html2pdf().set(opt).from(element).save().then(() => {
-                // 5. Instantly turn off "PDF Mode" to return the screen to normal
-                document.body.classList.remove('pdf-export-mode');
-            });
-        };
-        window.renderApp = function() {
+        // --- THE MASTER CALCULATOR ---
+        window.renderDashboard = function() {
             const selectedMonth = document.getElementById('view-month').value;
-            const monthTransactions = transactions.filter(t => t.date.startsWith(selectedMonth));
-            const monthSalaries = salaries.filter(s => s.date.startsWith(selectedMonth));
 
-            let monthIncome = 0;
-            let monthExpenses = 0;
+            // 1. Filter all data by the selected month
+            const mSales = sales.filter(x => x.date && x.date.startsWith(selectedMonth));
+            const mPurchases = purchases.filter(x => x.date && x.date.startsWith(selectedMonth));
+            const mWorkers = workers.filter(x => x.date && x.date.startsWith(selectedMonth));
+            const mSalaries = salaries.filter(x => x.date && x.date.startsWith(selectedMonth)); // Uses payment date
+            const mExpenses = expenses.filter(x => x.date && x.date.startsWith(selectedMonth));
 
-            monthTransactions.forEach(t => {
-                const isIncome = t.category === 'Boutique Sale' || t.category === 'Other Income';
-                if(isIncome) monthIncome += t.amount; else monthExpenses += t.amount;
-            });
+            // 2. Sum the categories
+            const totalRevenue = mSales.reduce((sum, item) => sum + (item.qty * item.rate), 0);
+            const totalMaterial = mPurchases.reduce((sum, item) => sum + item.total, 0);
+            const totalLabor = mWorkers.reduce((sum, item) => sum + item.total, 0);
+            const totalSalary = mSalaries.reduce((sum, item) => sum + item.amount, 0);
+            const totalShopExp = mExpenses.reduce((sum, item) => sum + item.amount, 0);
 
-            monthSalaries.forEach(s => { monthExpenses += s.amount; });
+            const totalCosts = totalMaterial + totalLabor + totalSalary + totalShopExp;
+            const netProfit = totalRevenue - totalCosts;
 
-            document.getElementById('total-income').innerText = formatMoney(monthIncome);
-            document.getElementById('total-expenses').innerText = formatMoney(monthExpenses);
-            const net = monthIncome - monthExpenses;
-            const netElement = document.getElementById('net-balance');
-            netElement.innerText = formatMoney(net);
-            netElement.style.color = net >= 0 ? '#2e7d32' : '#c62828';
+            // 3. Update the UI Metrics
+            document.getElementById('metric-revenue').innerText = formatMoney(totalRevenue);
+            document.getElementById('metric-costs').innerText = '-' + formatMoney(totalCosts);
+            
+            const profitEl = document.getElementById('metric-profit');
+            profitEl.innerText = formatMoney(netProfit);
+            profitEl.style.color = netProfit >= 0 ? '#2e7d32' : '#c62828';
+
+            // 4. Update the Cost Breakdown Table
+            document.getElementById('cost-materials').innerText = '-' + formatMoney(totalMaterial);
+            document.getElementById('cost-labor').innerText = '-' + formatMoney(totalLabor);
+            document.getElementById('cost-salary').innerText = '-' + formatMoney(totalSalary);
+            document.getElementById('cost-expenses').innerText = '-' + formatMoney(totalShopExp);
+            document.getElementById('cost-total').innerText = '-' + formatMoney(totalCosts);
+
+            // 5. Generate the Recent Activity Log (Combines everything!)
+            const activityLog = document.getElementById('activity-log');
+            let combinedLog = [];
+            
+            mSales.forEach(x => combinedLog.push({ date: x.date, type: 'Sales Order', desc: `SO: ${x.orderNo} (${x.client})`, amt: (x.qty*x.rate), isPos: true }));
+            mPurchases.forEach(x => combinedLog.push({ date: x.date, type: 'Material', desc: `${x.type} from ${x.supplier}`, amt: x.total, isPos: false }));
+            mWorkers.forEach(x => combinedLog.push({ date: x.date, type: 'Labor', desc: `${x.worker} (${x.article})`, amt: x.total, isPos: false }));
+            mSalaries.forEach(x => combinedLog.push({ date: x.date, type: 'Salary', desc: `${x.name}`, amt: x.amount, isPos: false }));
+            mExpenses.forEach(x => combinedLog.push({ date: x.date, type: 'Shop Exp', desc: `${x.head} - ${x.desc}`, amt: x.amount, isPos: false }));
+
+            // Sort by newest date first
+            combinedLog.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            activityLog.innerHTML = '';
+            if(combinedLog.length === 0) {
+                activityLog.innerHTML = '<tr><td colspan="4" class="empty-state">No financial activity logged for this month.</td></tr>';
+            } else {
+                combinedLog.slice(0, 10).forEach(log => { // Show top 10 recent
+                    activityLog.innerHTML += `
+                        <tr>
+                            <td>${new Date(log.date).toLocaleDateString('en-IN', {day:'numeric', month:'short'})}</td>
+                            <td><span style="background:#eee; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${log.type}</span></td>
+                            <td>${log.desc}</td>
+                            <td class="${log.isPos ? 'amount-pos' : 'amount-neg'}">${log.isPos ? '+' : '-'}${formatMoney(log.amt)}</td>
+                        </tr>
+                    `;
+                });
+            }
         };
 
-        onSnapshot(collection(db, "transactions"), (snapshot) => {
-            transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            window.renderApp();
-        });
+        // --- LISTENERS FOR ALL ERP DATA ---
+        onSnapshot(collection(db, "sales_orders"), (snap) => { sales = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_purchases"), (snap) => { purchases = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_worker_payments"), (snap) => { workers = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_staff_salaries"), (snap) => { salaries = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_expenses"), (snap) => { expenses = snap.docs.map(d => d.data()); window.renderDashboard(); });
 
-        onSnapshot(collection(db, "salaries"), (snapshot) => {
-            salaries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            window.renderApp();
-        });
     </script>
 </body>
 </html>
