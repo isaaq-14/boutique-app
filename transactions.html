@@ -93,6 +93,35 @@
                 <div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="ss-amount" placeholder="0.00"></div>
                 <button onclick="saveStaffSalary()">Log Salary Payout</button>
             </div>
+            <!-- 5. SALES INVOICE (Step 8) -->
+            <div class="card">
+                <h2>Log Sales Invoice (Delivery)</h2>
+                <div class="form-group"><label>Date</label><input type="date" id="inv-date"></div>
+                <div class="form-group"><label>Invoice No.</label><input type="text" id="inv-no" placeholder="E.g., INV-001"></div>
+                <div class="form-group"><label>Linked Order No.</label><input type="text" id="inv-so" placeholder="E.g., SO-1001"></div>
+                <div class="form-group"><label>Article Code</label><select id="inv-article"><option>Loading...</option></select></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Qty Delivered</label><input type="number" id="inv-qty" placeholder="0"></div>
+                    <div class="form-group" style="flex: 1;"><label>Rate (₹)</label><input type="number" id="inv-rate" placeholder="0.00"></div>
+                </div>
+                <button onclick="saveInvoice()">Record Invoice</button>
+            </div>
+
+            <!-- 6. PAYMENT RECEIPT (Step 9) -->
+            <div class="card">
+                <h2>Payment Receipt</h2>
+                <div class="form-group"><label>Date</label><input type="date" id="rec-date"></div>
+                <div class="form-group"><label>Client</label><select id="rec-client"><option>Loading...</option></select></div>
+                <div class="form-group"><label>Linked Invoice No.</label><input type="text" id="rec-inv" placeholder="E.g., INV-001"></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Amount Received</label><input type="number" id="rec-amount" placeholder="0.00"></div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Mode</label>
+                        <select id="rec-mode"><option>Bank Transfer</option><option>UPI</option><option>Cash</option></select>
+                    </div>
+                </div>
+                <button onclick="saveReceipt()">Log Payment</button>
+            </div>
 
         </div>
     </div>
@@ -118,6 +147,8 @@
         const today = new Date().toISOString().slice(0, 10);
         document.querySelectorAll('input[type="date"]').forEach(el => el.value = today);
         document.getElementById('ss-month').value = today.slice(0, 7);
+        document.getElementById('inv-date').value = today;
+        document.getElementById('rec-date').value = today;
 
         // --- PULL MASTERS FOR DROPDOWNS ---
         onSnapshot(collection(db, "master_workers"), (snap) => {
@@ -131,6 +162,39 @@
             snap.docs.forEach(doc => { const a = doc.data(); opts += `<option value="${a.code}">${a.name} [${a.code}]</option>`; });
             document.getElementById('wp-article').innerHTML = opts;
         });
+
+        onSnapshot(collection(db, "master_clients"), (snap) => {
+            let opts = '<option value="">-- Select Client --</option>';
+            snap.docs.forEach(doc => { const c = doc.data(); opts += `<option value="${c.name}">${c.name}</option>`; });
+            document.getElementById('rec-client').innerHTML = opts;
+        });
+        // Note: You can reuse the existing 'wp-article' snapshot to also fill 'inv-article' by adding:
+        // document.getElementById('inv-article').innerHTML = opts; inside the master_articles snapshot.
+
+        window.saveInvoice = async function() {
+            const date = document.getElementById('inv-date').value;
+            const invoiceNo = document.getElementById('inv-no').value;
+            const linkedSO = document.getElementById('inv-so').value;
+            const article = document.getElementById('inv-article').value;
+            const qty = parseInt(document.getElementById('inv-qty').value);
+            const rate = parseFloat(document.getElementById('inv-rate').value);
+            if (!invoiceNo || isNaN(qty) || isNaN(rate)) return alert("Fill required invoice fields.");
+            await addDoc(collection(db, "erp_invoices"), { date, invoiceNo, linkedSO, article, qty, rate, total: qty * rate });
+            alert("Invoice Logged!");
+            document.querySelectorAll('#inv-no, #inv-so, #inv-qty, #inv-rate').forEach(el => el.value = '');
+        };
+
+        window.saveReceipt = async function() {
+            const date = document.getElementById('rec-date').value;
+            const client = document.getElementById('rec-client').value;
+            const invoiceNo = document.getElementById('rec-inv').value;
+            const amount = parseFloat(document.getElementById('rec-amount').value);
+            const mode = document.getElementById('rec-mode').value;
+            if (!client || isNaN(amount)) return alert("Fill required receipt fields.");
+            await addDoc(collection(db, "erp_receipts"), { date, client, invoiceNo, amount, mode });
+            alert("Receipt Logged!");
+            document.querySelectorAll('#rec-inv, #rec-amount').forEach(el => el.value = '');
+        };
 
         // --- SAVE FUNCTIONS ---
         window.savePurchase = async function() {
