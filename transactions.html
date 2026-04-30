@@ -6,9 +6,9 @@
     <title>Financials | Muggun Boutique</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=6"> 
-    <!-- Remove html2pdf and add pdfMake -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <!-- Secure, CSP-Friendly PDF Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -195,72 +195,45 @@
             // 1. Save to Database
             await addDoc(collection(db, "erp_invoices"), { date, invoiceNo, linkedSO, article, qty, rate, total: totalAmount });
             
-            // 2. Define the Native PDF Receipt
+            // 2. Secure Native PDF Generation
             if(confirm("Invoice Saved! Download official PDF Receipt?")) {
-                const docDefinition = {
-                    content: [
-                        { text: 'MUGGUN BOUTIQUE', style: 'header', alignment: 'center' },
-                        { text: 'Tax Invoice / Bill of Supply\n\n', style: 'subheader', alignment: 'center' },
-                        
-                        // Invoice Meta Data
-                        {
-                            columns: [
-                                { text: `Invoice No: ${invoiceNo}\nDate: ${new Date(date).toLocaleDateString('en-IN')}`, width: '*' },
-                                { text: `Linked Order: ${linkedSO || 'N/A'}`, width: '*', alignment: 'right' }
-                            ]
-                        },
-                        { text: '\n' }, // Spacing
-                        
-                        // The Items Table
-                        {
-                            table: {
-                                headerRows: 1,
-                                widths: ['*', 'auto', 'auto', 'auto'],
-                                body: [
-                                    // Table Header
-                                    [
-                                        { text: 'Article Code', bold: true, fillColor: '#eeeeee' },
-                                        { text: 'Quantity', bold: true, fillColor: '#eeeeee' },
-                                        { text: 'Rate', bold: true, fillColor: '#eeeeee' },
-                                        { text: 'Total', bold: true, alignment: 'right', fillColor: '#eeeeee' }
-                                    ],
-                                    // Table Row Data
-                                    [
-                                        article,
-                                        `${qty} Units`,
-                                        formatMoney(rate),
-                                        { text: formatMoney(totalAmount), alignment: 'right' }
-                                    ],
-                                    // Empty row for spacing
-                                    ['', '', '', ''],
-                                    // Total Row
-                                    [
-                                        { text: 'Grand Total', bold: true, colSpan: 3, alignment: 'right' }, 
-                                        {}, 
-                                        {}, 
-                                        { text: formatMoney(totalAmount), bold: true, alignment: 'right' }
-                                    ]
-                                ]
-                            },
-                            layout: 'lightHorizontalLines'
-                        },
-                        
-                        // Footer signature
-                        { text: '\n\n\n\n' },
-                        { text: '_________________________', alignment: 'right' },
-                        { text: 'Authorized Signatory', alignment: 'right', margin: [0, 5, 10, 0] }
-                    ],
-                    styles: {
-                        header: { fontSize: 24, bold: true, margin: [0, 0, 0, 5] },
-                        subheader: { fontSize: 12, color: '#666666' }
-                    },
-                    defaultStyle: {
-                        font: 'Roboto'
-                    }
-                };
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
 
-                // Generate and download the crisp PDF
-                pdfMake.createPdf(docDefinition).download(`${invoiceNo}_Muggun_Boutique.pdf`);
+                // Header
+                doc.setFontSize(22);
+                doc.text("MUGGUN BOUTIQUE", 105, 20, { align: "center" });
+                doc.setFontSize(12);
+                doc.setTextColor(100);
+                doc.text("Tax Invoice / Bill of Supply", 105, 28, { align: "center" });
+
+                // Meta Data
+                doc.setTextColor(0);
+                doc.setFontSize(10);
+                doc.text(`Invoice No: ${invoiceNo}`, 14, 45);
+                doc.text(`Date: ${new Date(date).toLocaleDateString('en-IN')}`, 14, 52);
+                doc.text(`Linked Order: ${linkedSO || 'N/A'}`, 196, 45, { align: "right" });
+
+                // The Items Table
+                doc.autoTable({
+                    startY: 60,
+                    head: [['Article Code', 'Quantity', 'Rate', 'Total']],
+                    body: [
+                        [article, `${qty} Units`, formatMoney(rate), formatMoney(totalAmount)]
+                    ],
+                    theme: 'striped',
+                    headStyles: { fillColor: [46, 125, 50] }, // A nice dark green header
+                    foot: [['', '', 'Grand Total', formatMoney(totalAmount)]],
+                    footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
+                });
+
+                // Footer Signature
+                const finalY = doc.lastAutoTable.finalY || 80;
+                doc.text("_________________________", 196, finalY + 40, { align: "right" });
+                doc.text("Authorized Signatory", 196, finalY + 47, { align: "right" });
+
+                // Download
+                doc.save(`${invoiceNo}_Muggun_Boutique.pdf`);
             }
 
             // 3. Clear the form
@@ -281,71 +254,63 @@
             // 1. Save to Database
             await addDoc(collection(db, "erp_receipts"), { date, client, invoiceNo, amount, mode });
             
-            // 2. Define the Native PDF Receipt
+            // 2. Secure Native PDF Generation
             if(confirm("Payment Logged! Download official PDF Receipt?")) {
-                const docDefinition = {
-                    content: [
-                        { text: 'MUGGUN BOUTIQUE', style: 'header', alignment: 'center' },
-                        { text: 'Payment Receipt\n\n', style: 'subheader', alignment: 'center' },
-                        
-                        // Receipt Meta Data
-                        {
-                            columns: [
-                                { text: `Date: ${new Date(date).toLocaleDateString('en-IN')}\nMode: ${mode}`, width: '*' },
-                                { text: `Linked Invoice: ${invoiceNo}`, width: '*', alignment: 'right' }
-                            ]
-                        },
-                        { text: '\n\n' }, 
-                        
-                        // Main Content Table
-                        {
-                            table: {
-                                widths: ['*', 'auto'],
-                                body: [
-                                    [{ text: 'Received From', bold: true, fillColor: '#eeeeee', margin: [5, 5, 5, 5] }, { text: 'Amount', bold: true, alignment: 'right', fillColor: '#eeeeee', margin: [5, 5, 5, 5] }],
-                                    [
-                                        { text: client, margin: [5, 15, 5, 15] },
-                                        { text: formatMoney(amount), alignment: 'right', fontSize: 16, bold: true, margin: [5, 15, 5, 15] }
-                                    ]
-                                ]
-                            },
-                            layout: 'lightHorizontalLines'
-                        },
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
 
-                        { text: '\nThank you for your business!', alignment: 'center', color: '#888888', italics: true },
-                        
-                        // Footer signatures (Receipts usually have two)
-                        { text: '\n\n\n\n' },
-                        {
-                            columns: [
-                                { text: '_________________________', alignment: 'left' },
-                                { text: '_________________________', alignment: 'right' }
-                            ]
-                        },
-                        {
-                            columns: [
-                                { text: 'Customer Signature', alignment: 'left', margin: [0, 5, 0, 0], color: '#666' },
-                                { text: 'Authorized Signatory', alignment: 'right', margin: [0, 5, 10, 0], color: '#666' }
-                            ]
-                        }
+                // Header
+                doc.setFontSize(22);
+                doc.text("MUGGUN BOUTIQUE", 105, 20, { align: "center" });
+                doc.setFontSize(12);
+                doc.setTextColor(100);
+                doc.text("Payment Receipt", 105, 28, { align: "center" });
+
+                // Meta Data
+                doc.setTextColor(0);
+                doc.setFontSize(10);
+                doc.text(`Date: ${new Date(date).toLocaleDateString('en-IN')}`, 14, 45);
+                doc.text(`Mode: ${mode}`, 14, 52);
+                doc.text(`Linked Invoice: ${invoiceNo}`, 196, 45, { align: "right" });
+
+                // Main Content Table
+                doc.autoTable({
+                    startY: 60,
+                    head: [['Received From', 'Amount']],
+                    body: [
+                        [client, formatMoney(amount)]
                     ],
-                    styles: {
-                        header: { fontSize: 24, bold: true, margin: [0, 0, 0, 5] },
-                        subheader: { fontSize: 14, color: '#666666' }
-                    },
-                    defaultStyle: {
-                        font: 'Roboto'
-                    }
-                };
+                    theme: 'grid',
+                    headStyles: { fillColor: [46, 125, 50] }, // Dark green header
+                    bodyStyles: { fontSize: 14, fontStyle: 'bold', minCellHeight: 20, valign: 'middle' },
+                    columnStyles: { 1: { halign: 'right' } }
+                });
 
-                // Generate and download the crisp PDF
-                pdfMake.createPdf(docDefinition).download(`Receipt_${client.replace(/\s+/g, '_')}_${date}.pdf`);
+                // Thank you note
+                const finalY = doc.lastAutoTable.finalY || 80;
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                doc.setFont("helvetica", "italic");
+                doc.text("Thank you for your business!", 105, finalY + 15, { align: "center" });
+
+                // Footer Signatures
+                doc.setTextColor(0);
+                doc.setFont("helvetica", "normal");
+                
+                doc.text("_________________________", 14, finalY + 50);
+                doc.text("Customer Signature", 14, finalY + 57);
+
+                doc.text("_________________________", 196, finalY + 50, { align: "right" });
+                doc.text("Authorized Signatory", 196, finalY + 57, { align: "right" });
+
+                // Download
+                doc.save(`Receipt_${client.replace(/\s+/g, '_')}_${date}.pdf`);
             }
 
             // 3. Clear the form
             document.querySelectorAll('#rec-inv, #rec-amount').forEach(el => el.value = '');
         };
-
+        
         // --- SAVE FUNCTIONS ---
         window.savePurchase = async function() {
             const date = document.getElementById('pur-date').value;
