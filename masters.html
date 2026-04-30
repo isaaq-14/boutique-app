@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Data | Muggun Boutique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=6"> 
+</head>
+<body>
+
+    <!-- Updated Navigation (Needs to be updated on all pages eventually) -->
+    <nav class="top-nav">
+        <div class="nav-brand">MUGGUN BOUTIQUE</div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-btn">Dashboard</a>
+            <a href="masters.html" class="nav-btn active">Master Data</a>
+            <a href="transactions.html" class="nav-btn">Transactions</a>
+            <a href="payroll.html" class="nav-btn">Payroll</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="page-title">Master Data Management</h2>
+        <p style="color: #666; margin-bottom: 30px;">Define your core business entities here before logging operational transactions.</p>
+
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+            
+            <!-- ARTICLE MASTER -->
+            <div class="card">
+                <h2>Add New Article</h2>
+                <div class="form-group"><label>Article Code</label><input type="text" id="art-code" placeholder="e.g., MB-KUR-001"></div>
+                <div class="form-group"><label>Article Name</label><input type="text" id="art-name" placeholder="Kurti, Pajama, etc."></div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="art-category">
+                        <option value="Women">Women</option>
+                        <option value="Men">Men</option>
+                        <option value="Kids">Kids</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Standard Cost (₹)</label><input type="number" id="art-cost" placeholder="0.00"></div>
+                    <div class="form-group" style="flex: 1;"><label>Selling Price (₹)</label><input type="number" id="art-price" placeholder="0.00"></div>
+                </div>
+                <button onclick="saveArticle()">Save Article</button>
+            </div>
+
+            <!-- WORKER MASTER -->
+            <div class="card">
+                <h2>Add New Worker</h2>
+                <div class="form-group"><label>Worker ID</label><input type="text" id="wrk-id" placeholder="e.g., W-001"></div>
+                <div class="form-group"><label>Worker Name</label><input type="text" id="wrk-name"></div>
+                <div class="form-group">
+                    <label>Work Type</label>
+                    <select id="wrk-type">
+                        <option value="Tailor">Tailor</option>
+                        <option value="Interlock">Interlock</option>
+                        <option value="Finishing">Finishing</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Piece Rate (₹)</label><input type="number" id="wrk-rate" placeholder="0.00"></div>
+                <button onclick="saveWorker()">Save Worker</button>
+            </div>
+
+            <!-- CLIENT MASTER -->
+            <div class="card">
+                <h2>Add New Client</h2>
+                <div class="form-group"><label>Client ID</label><input type="text" id="cli-id" placeholder="e.g., C-001"></div>
+                <div class="form-group"><label>Client Name</label><input type="text" id="cli-name"></div>
+                <div class="form-group"><label>Contact Info</label><input type="text" id="cli-contact" placeholder="Phone / Email"></div>
+                <button onclick="saveClient()">Save Client</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // IMPORTANT: Paste your specific Firebase Config here!
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDAg0bLMj4hUsZ5PGGDqKyj5KwAQmMcNw",
+            authDomain: "boutique-app-d2693.firebaseapp.com",
+            projectId: "boutique-app-d2693",
+            storageBucket: "boutique-app-d2693.firebasestorage.app",
+            messagingSenderId: "762532423429",
+            appId: "1:762532423429:web:0b849c205deb831f71796c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.saveArticle = async function() {
+            const code = document.getElementById('art-code').value;
+            const name = document.getElementById('art-name').value;
+            const category = document.getElementById('art-category').value;
+            const cost = parseFloat(document.getElementById('art-cost').value);
+            const price = parseFloat(document.getElementById('art-price').value);
+            
+            if (!code || !name || isNaN(cost) || isNaN(price)) return alert("Fill all article fields");
+            
+            await addDoc(collection(db, "master_articles"), { code, name, category, cost, price });
+            alert("Article Saved!");
+            // Clear form
+            document.getElementById('art-code').value = ''; document.getElementById('art-name').value = ''; document.getElementById('art-cost').value = ''; document.getElementById('art-price').value = '';
+        };
+
+        window.saveWorker = async function() {
+            const id = document.getElementById('wrk-id').value;
+            const name = document.getElementById('wrk-name').value;
+            const type = document.getElementById('wrk-type').value;
+            const rate = parseFloat(document.getElementById('wrk-rate').value);
+            
+            if (!id || !name || isNaN(rate)) return alert("Fill all worker fields");
+            
+            await addDoc(collection(db, "master_workers"), { id, name, type, rate });
+            alert("Worker Saved!");
+            // Clear form
+            document.getElementById('wrk-id').value = ''; document.getElementById('wrk-name').value = ''; document.getElementById('wrk-rate').value = '';
+        };
+
+        window.saveClient = async function() {
+            const id = document.getElementById('cli-id').value;
+            const name = document.getElementById('cli-name').value;
+            const contact = document.getElementById('cli-contact').value;
+            
+            if (!id || !name) return alert("Fill all client fields");
+            
+            await addDoc(collection(db, "master_clients"), { id, name, contact });
+            alert("Client Saved!");
+            // Clear form
+            document.getElementById('cli-id').value = ''; document.getElementById('cli-name').value = ''; document.getElementById('cli-contact').value = '';
+        };
+    </script>
+</body>
+</html>
