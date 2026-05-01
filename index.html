@@ -116,7 +116,7 @@
         const db = getFirestore(app);
 
         // Data Storage (Added 'purchases' array here)
-        let salesOrders = [], prodOrders = [], workers = [], expenses = [], invoices = [], receipts = [], purchases = [];
+        let salesOrders = [], prodOrders = [], workers = [], expenses = [], invoices = [], receipts = [], purchases = [], salaries = [];
         const formatMoney = (amount) => '₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
         const today = new Date();
@@ -133,6 +133,8 @@
             const mInvoices = invoices.filter(x => x.date && x.date.startsWith(selectedMonth));
             const mReceipts = receipts.filter(x => x.date && x.date.startsWith(selectedMonth));
             const mPurchases = purchases.filter(x => x.date && x.date.startsWith(selectedMonth));
+            const mSalaries = salaries.filter(x => x.date && x.date.startsWith(selectedMonth));
+
 
             // --- REPORT C: SALES SUMMARY ---
             const totalInvoiced = mInvoices.reduce((sum, item) => sum + item.total, 0);
@@ -146,8 +148,10 @@
             const totalWorkerPay = mWorkers.reduce((sum, w) => sum + (parseFloat(w.total) || 0), 0);
             const totalShopExp = mExpenses.reduce((sum, ex) => sum + (parseFloat(ex.amount) || 0), 0);
             const totalMaterials = mPurchases.reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0); 
-            
-            const totalCosts = totalWorkerPay + totalShopExp + totalMaterials; 
+            const totalSalaries = mSalaries.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0); // <-- ADD THIS LINE
+
+            // Add totalSalaries to the master calculation!
+            const totalCosts = totalWorkerPay + totalShopExp + totalMaterials + totalSalaries;
             
             // 2. Calculate Net Profit & 50/50 Split
             const netProfit = totalInvoiced - totalCosts;
@@ -186,7 +190,23 @@
 
             // --- REPORT C (Extended): EXPENSE SUMMARY ---
             const expStats = {};
-            mExpenses.forEach(ex => { expStats[ex.head] = (expStats[ex.head] || 0) + ex.amount; });
+            
+            // 1. Tally up the regular shop expenses
+            mExpenses.forEach(ex => { expStats[ex.head] = (expStats[ex.head] || 0) + (parseFloat(ex.amount) || 0); });
+            
+            // 2. Add the Salaries to the breakdown
+            if (totalSalaries > 0) {
+                expStats['Staff Salaries'] = totalSalaries;
+            }
+
+            // 3. NEW: Add Material Purchases (broken down by type!)
+            mPurchases.forEach(p => {
+                // This creates labels like "Material - Fabric" or "Material - Thread"
+                const materialLabel = p.type ? `Material - ${p.type}` : 'Raw Materials';
+                expStats[materialLabel] = (expStats[materialLabel] || 0) + (parseFloat(p.total) || 0);
+            });
+
+            // 4. Print it all to the table
             const expTbody = document.getElementById('rep-expenses');
             expTbody.innerHTML = '';
             for (const [head, amt] of Object.entries(expStats)) {
@@ -210,6 +230,7 @@
             console.log("🚨 RAW FIREBASE DATA:", purchases); 
             window.renderDashboard(); 
         });
+        onSnapshot(collection(db, "erp_salaries"), (snap) => { salaries = snap.docs.map(d => d.data()); window.renderDashboard(); });
     </script>
 </body>
 </html>
