@@ -102,7 +102,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDDAg0bLMj4hUsZ5PGGDqKyj5KwAQmMcNw",
@@ -166,7 +166,7 @@
             // 4. Color Coding (Original Classic Colors)
             document.getElementById('pl-profit').style.color = netProfit < 0 ? '#d32f2f' : '#2e7d32';
             document.getElementById('pl-owner-share').style.color = ownerShare < 0 ? '#d32f2f' : '#2e7d32';
-            
+
             // --- REPORT A: ARTICLE-WISE REPORT ---
             const articleStats = {};
             mSO.forEach(so => { articleStats[so.article] = articleStats[so.article] || {o:0, p:0, s:0}; articleStats[so.article].o += so.qty; });
