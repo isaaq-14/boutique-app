@@ -101,9 +101,8 @@
     </div>
 
     <script type="module">
-        // Notice how both of these say 10.8.0 (or whatever version you are currently using)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDDAg0bLMj4hUsZ5PGGDqKyj5KwAQmMcNw",
@@ -116,8 +115,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Data Storage
-        let salesOrders = [], prodOrders = [], workers = [], expenses = [], invoices = [], receipts = [];
+        // Data Storage (Added 'purchases' array here)
+        let salesOrders = [], prodOrders = [], workers = [], expenses = [], invoices = [], receipts = [], purchases = [];
         const formatMoney = (amount) => '₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
         const today = new Date();
@@ -126,13 +125,14 @@
         window.renderDashboard = async function() {
             const selectedMonth = document.getElementById('view-month').value;
 
-            // Filter data by month
+            // Filter ALL data by month (Added mPurchases filter here)
             const mSO = salesOrders.filter(x => x.date && x.date.startsWith(selectedMonth));
             const mPO = prodOrders.filter(x => x.date && x.date.startsWith(selectedMonth));
             const mWorkers = workers.filter(x => x.date && x.date.startsWith(selectedMonth));
             const mExpenses = expenses.filter(x => x.date && x.date.startsWith(selectedMonth));
             const mInvoices = invoices.filter(x => x.date && x.date.startsWith(selectedMonth));
             const mReceipts = receipts.filter(x => x.date && x.date.startsWith(selectedMonth));
+            const mPurchases = purchases.filter(x => x.date && x.date.startsWith(selectedMonth));
 
             // --- REPORT C: SALES SUMMARY ---
             const totalInvoiced = mInvoices.reduce((sum, item) => sum + item.total, 0);
@@ -140,19 +140,14 @@
             document.getElementById('rep-sales').innerText = formatMoney(totalInvoiced);
             document.getElementById('rep-received').innerText = formatMoney(totalReceived);
             document.getElementById('rep-outstanding').innerText = formatMoney(totalInvoiced - totalReceived);
-            
-            // Fetch Material Purchases
-            const qPurchases = query(collection(db, "erp_purchases"));
-            const snapPurchases = await getDocs(qPurchases);
-            const mPurchases = snapPurchases.docs.map(doc => doc.data());
 
-          // --- EXECUTIVE P&L SYNC ---
+            // --- EXECUTIVE P&L SYNC ---
             // 1. Calculate Total Costs (Workers + Shop + Materials)
             const totalWorkerPay = mWorkers.reduce((sum, w) => sum + (parseFloat(w.total) || 0), 0);
             const totalShopExp = mExpenses.reduce((sum, ex) => sum + (parseFloat(ex.amount) || 0), 0);
-            const totalMaterials = mPurchases.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0); // <-- NEW!
+            const totalMaterials = mPurchases.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0); 
             
-            const totalCosts = totalWorkerPay + totalShopExp + totalMaterials; // <-- UPDATED!
+            const totalCosts = totalWorkerPay + totalShopExp + totalMaterials; 
             
             // 2. Calculate Net Profit & 50/50 Split
             const netProfit = totalInvoiced - totalCosts;
@@ -199,13 +194,14 @@
             }
         };
 
-        // Listeners
+        // Listeners (Added the erp_purchases listener here at the bottom)
         onSnapshot(collection(db, "sales_orders"), (snap) => { salesOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "production_orders"), (snap) => { prodOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_worker_payments"), (snap) => { workers = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_expenses"), (snap) => { expenses = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_invoices"), (snap) => { invoices = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_receipts"), (snap) => { receipts = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_purchases"), (snap) => { purchases = snap.docs.map(d => d.data()); window.renderDashboard(); });
     </script>
 </body>
 </html>
