@@ -122,7 +122,7 @@
         const today = new Date();
         document.getElementById('view-month').value = today.toISOString().slice(0, 7);
 
-        window.renderDashboard = function() {
+        window.renderDashboard = async function() {
             const selectedMonth = document.getElementById('view-month').value;
 
             // Filter data by month
@@ -139,16 +139,23 @@
             document.getElementById('rep-sales').innerText = formatMoney(totalInvoiced);
             document.getElementById('rep-received').innerText = formatMoney(totalReceived);
             document.getElementById('rep-outstanding').innerText = formatMoney(totalInvoiced - totalReceived);
+            
+            // Fetch Material Purchases
+            const qPurchases = query(collection(db, "erp_purchases"));
+            const snapPurchases = await getDocs(qPurchases);
+            const mPurchases = snapPurchases.docs.map(doc => doc.data());
 
           // --- EXECUTIVE P&L SYNC ---
-            // 1. Calculate Total Costs
-            const totalWorkerPay = mWorkers.reduce((sum, w) => sum + w.total, 0);
-            const totalShopExp = mExpenses.reduce((sum, ex) => sum + ex.amount, 0);
-            const totalCosts = totalWorkerPay + totalShopExp;
+            // 1. Calculate Total Costs (Workers + Shop + Materials)
+            const totalWorkerPay = mWorkers.reduce((sum, w) => sum + (parseFloat(w.total) || 0), 0);
+            const totalShopExp = mExpenses.reduce((sum, ex) => sum + (parseFloat(ex.amount) || 0), 0);
+            const totalMaterials = mPurchases.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0); // <-- NEW!
+            
+            const totalCosts = totalWorkerPay + totalShopExp + totalMaterials; // <-- UPDATED!
             
             // 2. Calculate Net Profit & 50/50 Split
             const netProfit = totalInvoiced - totalCosts;
-            const ownerShare = netProfit / 2; // Cuts the profit exactly in half
+            const ownerShare = netProfit / 2;
 
             // 3. Update the Top Cards
             document.getElementById('pl-revenue').innerText = formatMoney(totalInvoiced);
@@ -159,6 +166,7 @@
             // 4. Color Coding (Original Classic Colors)
             document.getElementById('pl-profit').style.color = netProfit < 0 ? '#d32f2f' : '#2e7d32';
             document.getElementById('pl-owner-share').style.color = ownerShare < 0 ? '#d32f2f' : '#2e7d32';
+            
             // --- REPORT A: ARTICLE-WISE REPORT ---
             const articleStats = {};
             mSO.forEach(so => { articleStats[so.article] = articleStats[so.article] || {o:0, p:0, s:0}; articleStats[so.article].o += so.qty; });
