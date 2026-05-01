@@ -230,7 +230,11 @@
             console.log("🚨 RAW FIREBASE DATA:", purchases); 
             window.renderDashboard(); 
         });
-        onSnapshot(collection(db, "erp_salaries"), (snap) => { salaries = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_salaries"), (snap) => { 
+            salaries = snap.docs.map(d => d.data()); 
+            console.log("💼 RAW SALARY DATA:", salaries); 
+            window.renderDashboard(); 
+        });
     </script>
 </body>
 </html>
