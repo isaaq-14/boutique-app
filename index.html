@@ -197,7 +197,11 @@
         // Listeners (Added the erp_purchases listener here at the bottom)
         onSnapshot(collection(db, "sales_orders"), (snap) => { salesOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "production_orders"), (snap) => { prodOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
-        onSnapshot(collection(db, "erp_worker_payments"), (snap) => { workers = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_worker_payments"), (snap) => { 
+            workers = snap.docs.map(d => d.data()); 
+            console.log("👷‍♂️ RAW WORKER DATA:", workers);
+            window.renderDashboard(); 
+        });
         onSnapshot(collection(db, "erp_expenses"), (snap) => { expenses = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_invoices"), (snap) => { invoices = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_receipts"), (snap) => { receipts = snap.docs.map(d => d.data()); window.renderDashboard(); });
