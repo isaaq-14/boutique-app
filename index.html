@@ -145,7 +145,7 @@
             // 1. Calculate Total Costs (Workers + Shop + Materials)
             const totalWorkerPay = mWorkers.reduce((sum, w) => sum + (parseFloat(w.total) || 0), 0);
             const totalShopExp = mExpenses.reduce((sum, ex) => sum + (parseFloat(ex.amount) || 0), 0);
-            const totalMaterials = mPurchases.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0); 
+            const totalMaterials = mPurchases.reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0); 
             
             const totalCosts = totalWorkerPay + totalShopExp + totalMaterials; 
             
