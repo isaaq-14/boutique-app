@@ -201,7 +201,11 @@
         onSnapshot(collection(db, "erp_expenses"), (snap) => { expenses = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_invoices"), (snap) => { invoices = snap.docs.map(d => d.data()); window.renderDashboard(); });
         onSnapshot(collection(db, "erp_receipts"), (snap) => { receipts = snap.docs.map(d => d.data()); window.renderDashboard(); });
-        onSnapshot(collection(db, "erp_purchases"), (snap) => { purchases = snap.docs.map(d => d.data()); window.renderDashboard(); });
+        onSnapshot(collection(db, "erp_purchases"), (snap) => { 
+            purchases = snap.docs.map(d => d.data()); 
+            console.log("🚨 RAW FIREBASE DATA:", purchases); 
+            window.renderDashboard(); 
+        });
     </script>
 </body>
 </html>
