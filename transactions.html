@@ -23,13 +23,13 @@
     </nav>
 
     <div class="container">
-        <h2 class="page-title">Expense & Payout Management</h2>
+        <h2 class="page-title">Expense & Income</h2>
         
         <div class="split-grid" style="grid-template-columns: 1fr 1fr; gap: 30px;">
             
             <!-- 1. MATERIAL PURCHASES -->
             <div class="card">
-                <h2>Log Material Purchase</h2>
+                <h2>Material Purchase</h2>
                 <div class="form-group"><label>Date</label><input type="date" id="pur-date"></div>
                 <div class="form-group"><label>Supplier Name</label><input type="text" id="pur-supplier" placeholder="E.g., ABC Fabrics"></div>
                 <div class="form-group">
@@ -57,7 +57,7 @@
 
             <!-- 2. SHOP EXPENSES -->
             <div class="card">
-                <h2>Log Shop Expense</h2>
+                <h2>Shop Expense</h2>
                 <div class="form-group"><label>Date</label><input type="date" id="exp-date"></div>
                 <div class="form-group">
                     <label>Expense Head</label>
@@ -105,12 +105,12 @@
                         <span id="wp-file-name">📁 Click to select receipt...</span>
                     </label>
                 </div>
-                <button onclick="saveWorkerPayment()">Log Worker Payout</button>
+                <button onclick="saveWorkerPayment()">Record Worker Payout</button>
             </div>
 
             <!-- 4. STAFF SALARY -->
             <div class="card">
-                <h2>Staff Salary Payout</h2>
+                <h2>Staff Salary</h2>
                 <div class="form-group"><label>Date Paid</label><input type="date" id="ss-date"></div>
                 <div class="form-group"><label>Staff Name</label><input type="text" id="ss-name" placeholder="E.g., Manager"></div>
                 <div class="form-group"><label>Salary Month</label><input type="month" id="ss-month"></div>
@@ -122,11 +122,11 @@
                         <span id="ss-file-name">📁 Click to select slip...</span>
                     </label>
                 </div>
-                <button onclick="saveStaffSalary()">Log Salary Payout</button>
+                <button onclick="saveStaffSalary()">Record Salary Payout</button>
             </div>
             <!-- 5. SALES INVOICE (Step 8) -->
             <div class="card">
-                <h2>Log Sales Invoice (Delivery)</h2>
+                <h2>Sales Invoice (Delivery)</h2>
                 <div class="form-group"><label>Date</label><input type="date" id="inv-date"></div>
                 <div class="form-group"><label>Invoice No.</label><input type="text" id="inv-no" placeholder="E.g., INV-001"></div>
                 <div class="form-group"><label>Linked Order No.</label><input type="text" id="inv-so" placeholder="E.g., SO-1001"></div>
@@ -135,7 +135,7 @@
                     <div class="form-group" style="flex: 1;"><label>Qty Delivered</label><input type="number" id="inv-qty" placeholder="0"></div>
                     <div class="form-group" style="flex: 1;"><label>Rate (₹)</label><input type="number" id="inv-rate" placeholder="0.00"></div>
                 </div>
-                <button onclick="saveInvoice()">Record Invoice</button>
+                <button onclick="saveInvoice()">Generate Invoice</button>
             </div>
 
             <!-- 6. PAYMENT RECEIPT (Step 9) -->
@@ -158,7 +158,7 @@
                         <span id="rec-file-name">📁 Click to upload receipt...</span>
                     </label>
                 </div>
-                <button onclick="saveReceipt()">Log Payment</button>
+                <button onclick="saveReceipt()">Record Payment</button>
             </div>
 
         </div>
