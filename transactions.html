@@ -47,7 +47,10 @@
                 </div>
                 <div class="form-group">
                     <label>Upload Receipt (Image)</label>
-                    <input type="file" id="pur-receipt" accept="image/*" style="padding: 5px;">
+                    <label class="custom-file-upload">
+                        <input type="file" id="pur-receipt" accept="image/*" onchange="updateFileName(this, 'pur-file-name')">
+                        <span id="pur-file-name">📁 Click to select receipt...</span>
+                    </label>
                 </div>
                 <button onclick="savePurchase()">Record Purchase</button>
             </div>
@@ -375,6 +378,8 @@
                 document.getElementById('pur-supplier').value = ''; 
                 document.getElementById('pur-qty').value = ''; 
                 document.getElementById('pur-rate').value = '';
+                document.getElementById('pur-file-name').innerText = "📁 Click to select receipt...";
+                document.getElementById('pur-file-name').style.color = "#777";
                 fileInput.value = '';
             } catch (error) {
                 console.error("Save Error:", error);
@@ -433,6 +438,21 @@
                 rateInput.value = ''; // Clears it if no worker is selected
             }
         });
+        // --- UPDATE FILE NAME ON CUSTOM UPLOAD BUTTON ---
+        window.updateFileName = function(input, textId) {
+            const displayText = document.getElementById(textId);
+            if (input.files && input.files.length > 0) {
+                // Change text to the filename and turn it green to show success!
+                displayText.innerText = "📄 " + input.files[0].name;
+                displayText.style.color = "#2e7d32"; 
+                displayText.style.fontWeight = "bold";
+            } else {
+                // Reset if they cancel
+                displayText.innerText = "📁 Click to select receipt...";
+                displayText.style.color = "#777";
+                displayText.style.fontWeight = "normal";
+            }
+        };
     </script>
 </body>
 </html>

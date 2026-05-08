@@ -85,6 +85,33 @@ th { color: #888; font-weight: 600; text-transform: uppercase; font-size: 0.75re
 .amount-neg { color: #c62828; font-weight: 600; }
 .empty-state { text-align: center; padding: 30px; color: #888; font-style: italic; }
 
+/* Hide the ugly default browser input completely */
+        .custom-file-upload input[type="file"] {
+            display: none; 
+        }
+
+        /* Style the label to look like a modern upload box */
+        .custom-file-upload {
+            display: block;
+            border: 2px dashed #ccc;
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #fafafa;
+            color: #777;
+            font-size: 14px;
+            transition: all 0.2s ease-in-out;
+            margin-top: 5px;
+        }
+
+        /* Add a nice hover effect using your boutique styling */
+        .custom-file-upload:hover {
+            border-color: #d4af37; /* Gold accent */
+            background-color: #fdfbf5;
+            color: #333;
+        }
+
 /* --- MOBILE RESPONSIVENESS --- */
 /* --- THE NUCLEAR MOBILE FIX --- */
 html, body { 
