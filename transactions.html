@@ -156,7 +156,11 @@
         // --- PULL MASTERS FOR DROPDOWNS ---
         onSnapshot(collection(db, "master_workers"), (snap) => {
             let opts = '<option value="">-- Select Worker --</option>';
-            snap.docs.forEach(doc => { const w = doc.data(); opts += `<option value="${w.name}">${w.name} - ${w.type}</option>`; });
+            snap.docs.forEach(doc => { 
+                const w = doc.data(); 
+                // Notice the new data-rate attribute!
+                opts += `<option value="${w.name}" data-rate="${w.rate || ''}">${w.name} - ${w.type}</option>`; 
+            });
             document.getElementById('wp-worker').innerHTML = opts;
         });
 
@@ -357,6 +361,22 @@
             alert("Salary Logged!");
             document.getElementById('ss-name').value = ''; document.getElementById('ss-amount').value = '';
         };
+    // --- AUTO-FILL WORKER RATE ---
+        document.getElementById('wp-worker').addEventListener('change', function() {
+            // 1. Get the exact option the user just clicked
+            const selectedOption = this.options[this.selectedIndex];
+            
+            // 2. Extract the hidden rate from it
+            const masterRate = selectedOption.getAttribute('data-rate');
+            
+            // 3. Drop it into the Rate input box!
+            const rateInput = document.getElementById('wp-rate');
+            if (masterRate && masterRate !== "undefined") {
+                rateInput.value = masterRate;
+            } else {
+                rateInput.value = ''; // Clears it if no worker is selected
+            }
+        });
     </script>
 </body>
 </html>
