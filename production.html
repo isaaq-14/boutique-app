@@ -73,12 +73,12 @@
                         <select id="po-worker"><option>Loading...</option></select>
                     </div>
                     <div class="form-group"><label>Quantity Planned</label><input type="number" id="po-qty" placeholder="0"></div>
-                    <button onclick="saveProductionOrder()">Dispatch to Floor</button>
+                    <button onclick="saveProductionOrder()">Assign</button>
                 </div>
             </div>
             <div>
                 <div class="card">
-                    <h2>Factory Floor Status</h2>
+                    <h2>Job in Progress</h2>
                     <table>
                         <thead><tr><th>Date</th><th>Worker</th><th>Article</th><th>Target Qty</th></tr></thead>
                         <tbody id="po-list"></tbody>
