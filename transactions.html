@@ -9,26 +9,61 @@
     <!-- Secure, CSP-Friendly PDF Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-</head>
-<body>
-
-    <nav class="top-nav">
-        <div class="nav-brand">MUGGUN BOUTIQUE</div>
-        <div class="nav-links">
-            <a href="index.html" class="nav-btn">Dashboard</a>
-            <a href="masters.html" class="nav-btn">Master Data</a>
-            <a href="production.html" class="nav-btn">Production</a>
-            <a href="transactions.html" class="nav-btn active">Entry</a>
-        </div>
-    </nav>
-
-    <div class="container">
-        <h2 class="page-title">Expense & Income</h2>
+    <style>/* --- DYNAMIC MODAL STYLING FOR TRANSACTIONS PAGE --- */
         
+        /* 1. Turn the entire page into a dark overlay */
+        body {
+            background-color: rgba(0,0,0,0.6) !important; 
+            display: flex;
+            justify-content: center;
+            align-items: center; 
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* 2. Hide all forms by default, style them as floating popups */
+        .card {
+            display: none; 
+            background: #fff;
+            width: 100%;
+            max-width: 450px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            max-height: 85vh; 
+            overflow-y: auto; 
+
+            /* --- THE NUCLEAR CENTERING OPTION --- */
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            margin: 0 !important; 
+        }
+
+        /* 3. The Close 'X' Button */
+        .close-popup {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            text-decoration: none;
+            color: #aaa;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        
+        .close-popup:hover { 
+            color: #d32f2f; 
+        }
+    </style>
+</head>
+<body>        
         <div class="split-grid" style="grid-template-columns: 1fr 1fr; gap: 30px;">
             
             <!-- 1. MATERIAL PURCHASES -->
-            <div class="card">
+            <div class="card" id="modal-materials">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Material Purchase</h2>
                 <div class="form-group"><label>Date</label><input type="date" id="pur-date"></div>
                 <div class="form-group"><label>Supplier Name</label><input type="text" id="pur-supplier" placeholder="E.g., ABC Fabrics"></div>
@@ -56,7 +91,8 @@
             </div>
 
             <!-- 2. SHOP EXPENSES -->
-            <div class="card">
+            <div class="card" id="modal-expenses">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Shop Expense</h2>
                 <div class="form-group"><label>Date</label><input type="date" id="exp-date"></div>
                 <div class="form-group">
@@ -83,7 +119,8 @@
             </div>
 
             <!-- 3. WORKER PAYMENT (Piece Rate) -->
-            <div class="card">
+            <div class="card" id="modal-worker-payments">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Worker Payment (Piece Rate)</h2>
                 <div class="form-group"><label>Date Paid</label><input type="date" id="wp-date"></div>
                 <div class="form-group">
@@ -109,7 +146,8 @@
             </div>
 
             <!-- 4. STAFF SALARY -->
-            <div class="card">
+            <div class="card" id="modal-salaries">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Staff Salary</h2>
                 <div class="form-group"><label>Date Paid</label><input type="date" id="ss-date"></div>
                 <div class="form-group"><label>Staff Name</label><input type="text" id="ss-name" placeholder="E.g., Manager"></div>
@@ -125,7 +163,8 @@
                 <button onclick="saveStaffSalary()">Record Salary</button>
             </div>
             <!-- 5. SALES INVOICE (Step 8) -->
-            <div class="card">
+            <div class="card" id="modal-sales">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Sales Invoice (Delivery)</h2>
                 <div class="form-group"><label>Date</label><input type="date" id="inv-date"></div>
                 <div class="form-group"><label>Invoice No.</label><input type="text" id="inv-no" placeholder="E.g., INV-001"></div>
@@ -139,7 +178,8 @@
             </div>
 
             <!-- 6. PAYMENT RECEIPT (Step 9) -->
-            <div class="card">
+            <div class="card" id="modal-receipts">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Payment Receipt</h2>
                 <div class="form-group"><label>Date</label><input type="date" id="rec-date"></div>
                 <div class="form-group"><label>Client</label><select id="rec-client"><option>Loading...</option></select></div>
@@ -188,6 +228,22 @@
         document.getElementById('inv-date').value = today;
         document.getElementById('rec-date').value = today;
 
+        // --- URL HASH ROUTER ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Get the requested form from the URL (e.g., it extracts "expenses" from "#expenses")
+            const hash = window.location.hash.substring(1); 
+            
+            // 2. Hide all form cards (Double-checking the CSS)
+            document.querySelectorAll('.card').forEach(card => card.style.display = 'none');
+
+            // 3. Find the matching modal and show it
+            if (hash && document.getElementById(`modal-${hash}`)) {
+                document.getElementById(`modal-${hash}`).style.display = 'block';
+            } else {
+                // Failsafe: If they load the page without a hash, just show the Receipts form
+                document.getElementById('modal-receipts').style.display = 'block';
+            }
+        });
         // --- PULL MASTERS FOR DROPDOWNS ---
         onSnapshot(collection(db, "master_workers"), (snap) => {
             let opts = '<option value="">-- Select Worker --</option>';

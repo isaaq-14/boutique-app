@@ -63,7 +63,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 
 .btn-group { display: flex; gap: 10px; margin-top: 10px; width: 100%; }
 button { width: 100%; padding: 14px; background-color: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s, border-color 0.3s, color 0.3s; font-family: inherit; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; }
-button:hover { background-color: var(--accent); }
+button:hover { background-color: #000000; }
 
 .btn-secondary { background-color: transparent; color: var(--text); border: 1px solid var(--border); }
 .btn-secondary:hover { background-color: var(--border); border-color: var(--border); color: var(--primary); }
@@ -184,3 +184,283 @@ body.pdf-export-mode .action-cell {
 body.pdf-export-mode .split-grid {
     grid-template-columns: 1fr !important;
 }
+/* --- VERTICAL SIDEBAR & MOBILE HEADER --- */
+
+/* --- THE UNBREAKABLE GRID HEADER --- */
+        .mobile-header {
+            background: #ffffff;
+            padding: 15px 20px;
+            
+            /* 1. Use Grid instead of Flexbox */
+            display: grid !important;
+            /* 2. Left column gets all remaining space (1fr), right column fits the button (auto) */
+            grid-template-columns: 1fr auto !important; 
+            align-items: center;
+            
+            /* 3. Force it to be exactly the width of the screen */
+            width: 100vw !important; 
+            max-width: 100%;
+            box-sizing: border-box !important;
+            
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        .nav-brand { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            justify-self: start; /* Locks logo to the left */
+        }
+        
+        .nav-brand h1 { 
+            font-family: 'Playfair Display', serif; 
+            margin: 0; 
+            font-size: 22px; 
+            color: #000000; 
+        }
+
+        .menu-btn { 
+            background: transparent; 
+            border: none; 
+            font-size: 28px; 
+            color: #333; 
+            cursor: pointer; 
+            padding: 5px; 
+            
+            justify-self: end !important; /* Locks button to the absolute right */
+            
+            /* Overriding the old absolute positioning */
+            position: static !important;
+            transform: none !important;
+            margin: 0 !important;
+            
+            /* The mobile tap fixes */
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+        }
+
+        .menu-btn:active, .menu-btn:focus {
+            background: transparent !important;
+            outline: none;
+        }
+
+/* The Sidebar Drawer */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* Hidden off-screen by default */
+    width: 260px;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.open { left: 0; } /* Slides in when active */
+
+.sidebar-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.sidebar-header h2 { margin: 0; font-size: 18px; color: #000000; }
+.close-btn { background: none; border: none; font-size: 28px; color: #aaa; cursor: pointer; }
+
+/* Dark Overlay for Mobile */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 950;
+    display: none; /* Hidden by default */
+}
+.sidebar-overlay.open { display: block; }
+
+/* Sidebar Links */
+.sidebar-menu { padding: 15px 0; }
+.sidebar-menu a, .dropdown-btn {
+    display: block;
+    padding: 15px 20px;
+    color: #555;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    border-bottom: 1px solid #f9f9f9;
+    transition: background 0.2s;
+}
+.sidebar-menu a:hover, .sidebar-menu a.active, .dropdown-btn:hover { background: #fdfbf5; color: #000000; }
+
+/* Dropdown/Accordion Styling */
+.dropdown-btn {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.arrow { font-size: 10px; transition: transform 0.2s; }
+.arrow.rotate { transform: rotate(180deg); }
+
+.dropdown-content {
+    display: none; /* Hidden by default */
+    background: #fcfcfc;
+    border-left: 3px solid #dd1ff7;
+}
+.dropdown-content.show { display: block; } /* Shows when clicked */
+
+.dropdown-content a {
+    padding: 12px 20px 12px 40px; /* Indented to show it's a sub-menu */
+    font-size: 13px;
+    border-bottom: none;
+}
+
+/* Desktop Adjustments (Locked Sidebar for large screens) */
+        @media (min-width: 1024px) {
+            /* 1. Hide the mobile header and overlay completely */
+            .mobile-header, 
+            .sidebar-overlay, 
+            .sidebar-overlay.open { 
+                display: none !important; 
+            }
+            
+            /* 2. Lock the sidebar to the left */
+            .sidebar { 
+                left: 0 !important; 
+            } 
+            
+            /* 3. Hide the X button because the sidebar is permanent here */
+            .close-btn { 
+                display: none; 
+            } 
+            
+            /* 4. Push the dashboard over so it doesn't hide behind the sidebar */
+            .main-content { 
+                margin-left: 260px; 
+                padding: 20px; 
+            }
+        }
+
+/* --- SMOOTH MODALS & BLURRED BACKGROUND --- */
+        
+        /* The Dark, Blurred Background */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(6px); /* The magic blur effect */
+            -webkit-backdrop-filter: blur(6px); /* For Safari support */
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* The Form Card Animation */
+        .modal-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            /* Starts slightly lower and invisible for a slide-up effect */
+            transform: translate(-50%, -40%); 
+            opacity: 0;
+            visibility: hidden;
+            
+            background: #fff;
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            max-height: 85vh; 
+            overflow-y: auto; 
+            z-index: 2001;
+            
+            /* The cubic-bezier gives it that premium 'app bounce' */
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            /* If the modal has a table, we give it more breathing room */
+            #modal-clients, #modal-workers {
+                max-width: 700px; 
+            }
+        }
+
+        .modal-card.show {
+            /* Snaps to the exact dead-center */
+            transform: translate(-50%, -50%);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .close-modal {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            transition: color 0.2s;
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            font-size: 32px;
+            line-height: 0;
+            height: 32px;
+            width: 32px;
+            padding: 0;
+            margin: 0;
+            
+            /* --- THE PIXEL NUDGE --- */
+            /* Negative Y moves it UP, positive Y moves it DOWN */
+            transform: translateY(-15px); 
+            
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        .close-modal:hover {
+            background-color: #fff;
+            color: #d32f2f;
+        }
+
+        /* --- MODAL HEADER GRID --- */
+        .modal-header {
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center; /* This is the vertical anchor */
+            width: 100%;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0; /* Optional: adds a nice clean separator */
+        }
+
+        .modal-header h3 {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: 'Playfair Display', serif;
+            color: #333;
+            font-size: 22px;
+            line-height: 1.2; /* Gives the heading a predictable height */
+        }

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Muggun Boutique ERP</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=8"> 
+    <link rel="stylesheet" href="style.css?v=11"> 
     <style>
         /* --- SURGICAL FIX FOR TOP SUMMARY NUMBERS --- */
         .card {
@@ -86,19 +86,51 @@
     </style>
 </head>
 <body>
+    <header class="mobile-header">
+        <div class="nav-brand">
+            <span class="logo-icon"></span>
+            <h1>Muggun Boutique</h1>
+        </div>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    </header>
 
-    <nav class="top-nav">
-        <div class="nav-brand">MUGGUN BOUTIQUE</div>
-        <div class="nav-links">
-            <a href="index.html" class="nav-btn active">Dashboard</a>
-            <a href="masters.html" class="nav-btn">Master Data</a>
-            <a href="production.html" class="nav-btn">Production</a>
-            <a href="transactions.html" class="nav-btn">Entry</a>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="close-btn" onclick="toggleSidebar()">&times;</button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="index.html" class="active">Dashboard</a>
+            <div class="dropdown">
+                <button class="dropdown-btn" onclick="toggleDropdown()">
+                    Entry <span class="arrow" id="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-content" id="financials-menu">
+                    <a href="#" onclick="openModal('modal-receipts'); return false;">Record Incoming Payment</a>
+                    <a href="#" onclick="openModal('modal-expenses'); return false;">Record Shop Expense</a>
+                    <a href="#" onclick="openModal('modal-materials'); return false;">Record Material Purchase</a>
+                    <a href="#" onclick="openModal('modal-salaries'); return false;">Record Salary Payment</a>
+                    <a href="#" onclick="openModal('modal-sales'); return false;">Generate Sales Invoice</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-btn" onclick="toggleMasterDropdown()">
+                    Masters Data <span class="arrow" id="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-content" id="master-menu">
+                    <a href="#" onclick="openModal('modal-clients'); return false;">Manage Clients</a>
+                    <a href="#" onclick="openModal('modal-workers'); return false;">Manage Workers</a>
+                    <a href="#" onclick="openModal('modal-articles'); return false;">Manage Articles</a>
+                </div>
+            </div>
+            <a href="production.html">Production</a>
         </div>
     </nav>
-
+    <main class="main-content">
     <div class="container">
-        
         <div class="controls-header no-print">
             <div class="month-selector">
                 <label for="view-month" style="margin: 0;">Financial Month:</label>
@@ -130,7 +162,7 @@
     <h3>Profit Share (50%)</h3>
     <p class="amount-pos" id="pl-owner-share">₹0.00</p>
 </div>
-            </div>
+</div>
 
         <!-- PDF REPORT C: SALES SUMMARY -->
         <div class="card" style="margin-top: 20px;">
@@ -238,7 +270,7 @@
             transform: scale(1.3); 
         }
     </style>
-
+    
     <div class="modal-overlay" id="receipt-modal">
         <div class="modal-content">
             <button class="close-btn" onclick="document.getElementById('receipt-modal').style.display='none'">&times;</button>
@@ -246,248 +278,226 @@
             <div class="receipt-grid" id="modal-grid"></div>
         </div>
     </div>
+</main>
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="dashboard.js"></script>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<div class="modal-overlay" id="global-overlay" onclick="closeAllModals()"></div>
+<div class="modal-card" id="modal-materials">
+        <div class="modal-header">
+                <h2>Material Purchase</h2>
+                <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Date</label><input type="date" id="pur-date"></div>
+                <div class="form-group"><label>Supplier Name</label><input type="text" id="pur-supplier" placeholder="E.g., ABC Fabrics"></div>
+                <div class="form-group">
+                    <label>Material Type</label>
+                    <select id="pur-type">
+                        <option value="Fabric">Fabric</option>
+                        <option value="Thread">Thread</option>
+                        <option value="Buttons/Zips">Buttons / Zips</option>
+                        <option value="Packaging">Packaging</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Qty</label><input type="number" id="pur-qty" placeholder="0"></div>
+                    <div class="form-group" style="flex: 1;"><label>Rate (₹)</label><input type="number" id="pur-rate" placeholder="0.00"></div>
+                </div>
+                <div class="form-group">
+                    <label>Upload Receipt (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="pur-receipt" accept="image/*" onchange="updateFileName(this, 'pur-file-name')" style="display: none;">
+                        <span id="pur-file-name">📁 Click to select receipt...</span>
+                    </label>
+                </div>
+                <button onclick="savePurchase()">Record Purchase</button>
+            </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDDAg0bLMj4hUsZ5PGGDqKyj5KwAQmMcNw",
-            authDomain: "boutique-app-d2693.firebaseapp.com",
-            projectId: "boutique-app-d2693",
-            storageBucket: "boutique-app-d2693.firebasestorage.app",
-            messagingSenderId: "762532423429",
-            appId: "1:762532423429:web:0b849c205deb831f71796c"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+            <!-- 2. SHOP EXPENSES -->
+            <div class="modal-card" id="modal-expenses">
+                <div class="modal-header">
+                    <h2>Shop Expense</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Date</label><input type="date" id="exp-date"></div>
+                <div class="form-group">
+                    <label>Expense Head</label>
+                    <select id="exp-head">
+                        <option value="EXP-RENT">Rent</option>
+                        <option value="EXP-ELEC">Electricity</option>
+                        <option value="EXP-TEA">Tea</option>
+                        <option value="EXP-SNACKS">Snacks</option>
+                        <option value="EXP-WATER">Water</option>
+                        <option value="EXP-MISC">Miscellaneous</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Description / Note</label><input type="text" id="exp-desc" placeholder="E.g., April Bill"></div>
+                <div class="form-group"><label>Amount (₹)</label><input type="number" id="exp-amount" placeholder="0.00"></div>
+                <div class="form-group">
+                    <label>Upload Bill/Receipt (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="exp-receipt" accept="image/*" onchange="updateFileName(this, 'exp-file-name')" style="display: none;">
+                        <span id="exp-file-name">📁 Click to select bill...</span>
+                    </label>
+                </div>
+                <button onclick="saveExpense()">Record Expense</button>
+            </div>
 
-        // Data Storage (Added 'purchases' array here)
-        let salesOrders = [], prodOrders = [], workers = [], expenses = [], invoices = [], receipts = [], purchases = [], salaries = [];
-        let articles = [];
-        const formatMoney = (amount) => '₹' + amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            <!-- 3. WORKER PAYMENT (Piece Rate) -->
+            <div class="modal-card" id="modal-worker-payments">
+                <div class="modal-header">
+                    <h2>Worker Payment (Piece Rate)</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Date Paid</label><input type="date" id="wp-date"></div>
+                <div class="form-group">
+                    <label>Select Worker</label>
+                    <select id="wp-worker"><option>Loading...</option></select>
+                </div>
+                <div class="form-group">
+                    <label>Article Completed</label>
+                    <select id="wp-article"><option>Loading...</option></select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Qty Completed</label><input type="number" id="wp-qty" placeholder="0"></div>
+                    <div class="form-group" style="flex: 1;"><label>Rate/Piece (₹)</label><input type="number" id="wp-rate" placeholder="0.00"></div>
+                </div>
+                <div class="form-group">
+                    <label>Upload Ledger/Proof (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="wp-receipt" accept="image/*" onchange="updateFileName(this, 'wp-file-name')" style="display: none;">
+                        <span id="wp-file-name">📁 Click to select receipt...</span>
+                    </label>
+                </div>
+                <button onclick="saveWorkerPayment()">Record Worker Payment</button>
+            </div>
+
+            <!-- 4. STAFF SALARY -->
+            <div class="modal-card" id="modal-salaries">
+                <div class="modal-header">
+                    <h2>Staff Salary</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Date Paid</label><input type="date" id="ss-date"></div>
+                <div class="form-group"><label>Staff Name</label><input type="text" id="ss-name" placeholder="E.g., Manager"></div>
+                <div class="form-group"><label>Salary Month</label><input type="month" id="ss-month"></div>
+                <div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="ss-amount" placeholder="0.00"></div>
+                <div class="form-group">
+                    <label>Upload Payment Slip/Proof (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="ss-receipt" accept="image/*" onchange="updateFileName(this, 'ss-file-name')" style="display: none;">
+                        <span id="ss-file-name">📁 Click to select slip...</span>
+                    </label>
+                </div>
+                <button onclick="saveStaffSalary()">Record Salary</button>
+            </div>
+            <!-- 5. SALES INVOICE (Step 8) -->
+            <div class="modal-card" id="modal-sales">
+                <div class="modal-header">
+                    <h2>Sales Invoice (Delivery)</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Date</label><input type="date" id="inv-date"></div>
+                <div class="form-group"><label>Invoice No.</label><input type="text" id="inv-no" placeholder="E.g., INV-001"></div>
+                <div class="form-group"><label>Linked Order No.</label><input type="text" id="inv-so" placeholder="E.g., SO-1001"></div>
+                <div class="form-group"><label>Article Code</label><select id="inv-article"><option>Loading...</option></select></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Qty Delivered</label><input type="number" id="inv-qty" placeholder="0"></div>
+                    <div class="form-group" style="flex: 1;"><label>Rate (₹)</label><input type="number" id="inv-rate" placeholder="0.00"></div>
+                </div>
+                <button onclick="saveInvoice()">Generate Invoice</button>
+            </div>
+
+            <!-- 6. PAYMENT RECEIPT (Step 9) -->
+            <div class="modal-card" id="modal-receipts">
+                <div class="modal-header">
+                    <h2>Payment Receipt</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Date</label><input type="date" id="rec-date"></div>
+                <div class="form-group"><label>Client</label><select id="rec-client"><option>Loading...</option></select></div>
+                <div class="form-group"><label>Linked Invoice No.</label><input type="text" id="rec-inv" placeholder="E.g., INV-001"></div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Amount Received</label><input type="number" id="rec-amount" placeholder="0.00"></div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Mode</label>
+                        <select id="rec-mode"><option>Bank Transfer</option><option>UPI</option><option>Cash</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Upload Payment Screenshot/Proof (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="rec-receipt" accept="image/*" onchange="updateFileName(this, 'rec-file-name')" style="display: none;">
+                        <span id="rec-file-name">📁 Click to upload receipt...</span>
+                    </label>
+                </div>
+                <button onclick="saveReceipt()">Record Payment</button>
+            </div>
         
-        const today = new Date();
-        document.getElementById('view-month').value = today.toISOString().slice(0, 7);
-
-        window.renderDashboard = async function() {
-            const selectedMonth = document.getElementById('view-month').value;
-
-            // Filter ALL data by month
-            const mSO = salesOrders.filter(x => x.date && x.date.startsWith(selectedMonth));
-            const mPO = prodOrders.filter(x => x.date && x.date.startsWith(selectedMonth));
-            const mWorkers = workers.filter(x => x.date && x.date.startsWith(selectedMonth));
-            const mExpenses = expenses.filter(x => x.date && x.date.startsWith(selectedMonth));
-            const mInvoices = invoices.filter(x => x.date && x.date.startsWith(selectedMonth));
-            const mReceipts = receipts.filter(x => x.date && x.date.startsWith(selectedMonth));
-            const mPurchases = purchases.filter(x => x.date && x.date.startsWith(selectedMonth));
-            const mSalaries = salaries.filter(x => x.date && x.date.startsWith(selectedMonth));
-
-            // --- NEW SAFE HELPER ---
-            // Failsafe: Ensures the app never crashes if the 'articles' array isn't loaded yet
-            const formatArticleName = (code) => {
-                try {
-                    // Looks for your global master articles array (assuming it's named 'articles')
-                    if (typeof articles !== 'undefined' && Array.isArray(articles)) {
-                        const art = articles.find(a => a.code === code);
-                        if (art) return `${art.name} [${code}]`;
-                    }
-                } catch (e) { console.error("Name lookup skipped:", e); }
-                return code; // Fallback: Just show the code if the name can't be found
-            };
-
-            // --- REPORT C: SALES SUMMARY ---
-            const totalInvoiced = mInvoices.reduce((sum, item) => sum + item.total, 0);
-            const totalReceived = mReceipts.reduce((sum, item) => sum + item.amount, 0);
-            document.getElementById('rep-sales').innerText = formatMoney(totalInvoiced);
-            document.getElementById('rep-received').innerText = formatMoney(totalReceived);
-            document.getElementById('rep-outstanding').innerText = formatMoney(totalInvoiced - totalReceived);
-
-            // --- EXECUTIVE P&L SYNC ---
-            const totalWorkerPay = mWorkers.reduce((sum, w) => sum + (parseFloat(w.total) || 0), 0);
-            const totalShopExp = mExpenses.reduce((sum, ex) => sum + (parseFloat(ex.amount) || 0), 0);
-            const totalMaterials = mPurchases.reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0); 
-            const totalSalaries = mSalaries.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0); 
-
-            const totalCosts = totalWorkerPay + totalShopExp + totalMaterials + totalSalaries;
-            const netProfit = totalInvoiced - totalCosts;
-            const ownerShare = netProfit / 2;
-
-            document.getElementById('pl-revenue').innerText = formatMoney(totalInvoiced);
-            document.getElementById('pl-costs').innerText = formatMoney(totalCosts);
-            document.getElementById('pl-profit').innerText = formatMoney(netProfit);
-            document.getElementById('pl-owner-share').innerText = formatMoney(ownerShare);
-            
-            document.getElementById('pl-profit').style.color = netProfit < 0 ? '#d32f2f' : '#2e7d32';
-            document.getElementById('pl-owner-share').style.color = ownerShare < 0 ? '#d32f2f' : '#2e7d32';
-
-            // --- REPORT A: ARTICLE-WISE REPORT ---
-            const articleStats = {};
-            mSO.forEach(so => { articleStats[so.article] = articleStats[so.article] || {o:0, p:0, s:0}; articleStats[so.article].o += so.qty; });
-            mPO.forEach(po => { articleStats[po.article] = articleStats[po.article] || {o:0, p:0, s:0}; articleStats[po.article].p += po.qty; });
-            mInvoices.forEach(inv => { articleStats[inv.article] = articleStats[inv.article] || {o:0, p:0, s:0}; articleStats[inv.article].s += inv.qty; });
-            
-            const artTbody = document.getElementById('rep-article-wise');
-            artTbody.innerHTML = '';
-            for (const [art, data] of Object.entries(articleStats)) {
-                // INJECTED HELPER HERE
-                artTbody.innerHTML += `<tr><td><strong>${formatArticleName(art)}</strong></td><td>${data.o}</td><td>${data.p}</td><td>${data.s}</td></tr>`;
-            }
-
-            // --- REPORT B: COSTING REPORT (Labor per article) ---
-            const laborCosts = {};
-            mWorkers.forEach(w => { laborCosts[w.article] = (laborCosts[w.article] || 0) + w.total; });
-            const costTbody = document.getElementById('rep-costing');
-            costTbody.innerHTML = '';
-            for (const [art, cost] of Object.entries(laborCosts)) {
-                // INJECTED HELPER HERE
-                costTbody.innerHTML += `<tr><td><strong>${formatArticleName(art)}</strong></td><td class="amount-neg">${formatMoney(cost)}</td></tr>`;
-            }
-
-            // --- REPORT C (Extended): EXPENSE SUMMARY ---
-            const expStats = {};
-            window.currentReceiptsMap = {}; 
-            
-            mExpenses.forEach(ex => { 
-                expStats[ex.head] = (expStats[ex.head] || 0) + (parseFloat(ex.amount) || 0); 
-                if (ex.receiptUrl) {
-                    if (!window.currentReceiptsMap[ex.head]) window.currentReceiptsMap[ex.head] = [];
-                    window.currentReceiptsMap[ex.head].push({ url: ex.receiptUrl, date: ex.date, supplier: ex.desc });
-                }
-            });
-            
-            if (totalSalaries > 0) {
-                expStats['Staff Salaries'] = totalSalaries;
-                mSalaries.forEach(s => {
-                    if (s.receiptUrl) {
-                        if (!window.currentReceiptsMap['Staff Salaries']) window.currentReceiptsMap['Staff Salaries'] = [];
-                        window.currentReceiptsMap['Staff Salaries'].push({ url: s.receiptUrl, date: s.date, supplier: `${s.name} - ${s.month}` });
-                    }
-                });
-            }
-
-            mPurchases.forEach(p => {
-                const materialLabel = p.type ? `Material - ${p.type}` : 'Raw Materials';
-                expStats[materialLabel] = (expStats[materialLabel] || 0) + (parseFloat(p.total) || 0);
-                if (p.receiptUrl) {
-                    if (!window.currentReceiptsMap[materialLabel]) window.currentReceiptsMap[materialLabel] = [];
-                    window.currentReceiptsMap[materialLabel].push({ url: p.receiptUrl, date: p.date, supplier: p.supplier });
-                }
-            });
-            
-            mWorkers.forEach(w => {
-                const workerLabel = `Labor - ${w.worker}`;
-                expStats[workerLabel] = (expStats[workerLabel] || 0) + (parseFloat(w.total) || 0);
-                if (w.receiptUrl) {
-                    if (!window.currentReceiptsMap[workerLabel]) window.currentReceiptsMap[workerLabel] = [];
-                    window.currentReceiptsMap[workerLabel].push({ url: w.receiptUrl, date: w.date, supplier: `Article: ${w.article}` });
-                }
-            });
-            
-            const expTbody = document.getElementById('rep-expenses');
-            expTbody.innerHTML = '';
-            for (const [head, amt] of Object.entries(expStats)) {
-                let rowHtml = `<tr><td>${head.replace('EXP-','')}</td>`;
-                let iconHtml = '';
-                if (window.currentReceiptsMap[head] && window.currentReceiptsMap[head].length > 0) {
-                    iconHtml = `<button class="view-btn no-print" onclick="openReceiptModal('${head}')" title="View Receipts">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px; color: #777; transition: color 0.2s;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </button>`;
-                }
-                rowHtml += `<td class="amount-neg">${formatMoney(amt)} ${iconHtml}</td></tr>`;
-                expTbody.innerHTML += rowHtml;
-            }
-            // --- REPORT D: INCOMING PAYMENTS LEDGER ---
-            const recTbody = document.getElementById('rep-receipts');
-            recTbody.innerHTML = '';
-            
-            // Loop through the filtered receipts and build the rows
-            mReceipts.forEach(r => {
-                let iconHtml = '';
-                
-                // If they uploaded a screenshot, wire it up to the modal!
-                if (r.receiptUrl) {
-                    const head = `Payment: ${r.client}`; // Title for the modal
-                    
-                    if (!window.currentReceiptsMap[head]) window.currentReceiptsMap[head] = [];
-                    // Pass the Mode and Invoice No as the "Supplier" text in the modal
-                    window.currentReceiptsMap[head].push({ 
-                        url: r.receiptUrl, 
-                        date: r.date, 
-                        supplier: `Mode: ${r.mode} | Inv: ${r.invoiceNo}` 
-                    });
-                    
-                    iconHtml = `<button class="view-btn no-print" onclick="openReceiptModal('${head}')" title="View Proof">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px; color: #777; transition: color 0.2s;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </button>`;
-                }
-
-                // Add the row to the table (Formatting the text green since it's income!)
-                recTbody.innerHTML += `<tr>
-                    <td>${new Date(r.date).toLocaleDateString('en-IN')}</td>
-                    <td>${r.client}</td>
-                    <td>${r.invoiceNo}</td>
-                    <td style="text-align: right; color: #2e7d32; font-weight: bold;">
-                        ${formatMoney(r.amount)} ${iconHtml}
-                    </td>
-                </tr>`;
-            });
-        };
-        window.openReceiptModal = function(categoryHead) {
-            const receipts = window.currentReceiptsMap[categoryHead] || [];
-            const grid = document.getElementById('modal-grid');
-            document.getElementById('modal-title').innerText = `Receipts for ${categoryHead.replace('EXP-','')}`;
-            
-            grid.innerHTML = '';
-            
-            if (receipts.length === 0) {
-                grid.innerHTML = '<p>No receipts found for this category.</p>';
-            } else {
-                receipts.forEach(r => {
-                    // Formats date nicely
-                    const dateFmt = new Date(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-                    grid.innerHTML += `
-                        <div class="receipt-card">
-                            <a href="${r.url}" target="_blank">
-                                <img src="${r.url}" alt="Receipt">
-                            </a>
-                            <div style="font-size: 12px; margin-top: 5px; font-weight: bold;">${dateFmt}</div>
-                            <div style="font-size: 11px; color: #666;">${r.supplier || ''}</div>
-                        </div>
-                    `;
-                });
-            }
-            
-            document.getElementById('receipt-modal').style.display = 'flex';
-        };
-        // Listeners (Added the erp_purchases listener here at the bottom)
-        onSnapshot(collection(db, "sales_orders"), (snap) => { salesOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
-        onSnapshot(collection(db, "production_orders"), (snap) => { prodOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
-        onSnapshot(collection(db, "erp_worker_payments"), (snap) => { 
-            workers = snap.docs.map(d => d.data()); 
-            console.log("👷‍♂️ RAW WORKER DATA:", workers);
-            window.renderDashboard(); 
-        });
-        onSnapshot(collection(db, "erp_expenses"), (snap) => { expenses = snap.docs.map(d => d.data()); window.renderDashboard(); });
-        onSnapshot(collection(db, "erp_invoices"), (snap) => { invoices = snap.docs.map(d => d.data()); window.renderDashboard(); });
-        // --- NEW: Download Master Articles for the Dashboard ---
-        onSnapshot(collection(db, "master_articles"), (snap) => {
-            articles = snap.docs.map(doc => doc.data());
-            renderDashboard(); // Re-draw the dashboard once names are loaded!
-        });
-        onSnapshot(collection(db, "erp_receipts"), (snap) => { receipts = snap.docs.map(d => d.data()); window.renderDashboard(); });
-        onSnapshot(collection(db, "erp_purchases"), (snap) => { 
-            purchases = snap.docs.map(d => d.data()); 
-            console.log("🚨 RAW FIREBASE DATA:", purchases); 
-            window.renderDashboard(); 
-        });
-        onSnapshot(collection(db, "erp_staff_salaries"), (snap) => { salaries = snap.docs.map(d => d.data()); window.renderDashboard(); });
-    </script>
+    //Masters POPUP
+    <div class="modal-card" id="modal-articles">
+                <div class="modal-header">
+                    <h2>Add New Article</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Article Code</label><input type="text" id="art-code" placeholder="e.g., MB-KUR-001"></div>
+                <div class="form-group"><label>Article Name</label><input type="text" id="art-name" placeholder="Kurti, Pajama, etc."></div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="art-category">
+                        <option value="Women">Women</option>
+                        <option value="Men">Men</option>
+                        <option value="Kids">Kids</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;"><label>Standard Cost (₹)</label><input type="number" id="art-cost" placeholder="0.00"></div>
+                    <div class="form-group" style="flex: 1;"><label>Selling Price (₹)</label><input type="number" id="art-price" placeholder="0.00"></div>
+                </div>
+                <button onclick="saveArticle()">Save Article</button>
+                <button type="button" onclick="openManager('articles')" style="background: #555; margin-top: 10px;">⚙️ Manage Articles</button>
+            </div>
+            <!-- WORKER MASTER -->
+            <div class="modal-card" id="modal-workers">
+                <div class="modal-header">
+                    <h2>Add New Worker</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Worker ID</label><input type="text" id="wrk-id" placeholder="e.g., W-001"></div>
+                <div class="form-group"><label>Worker Name</label><input type="text" id="wrk-name"></div>
+                <div class="form-group">
+                    <label>Work Type</label>
+                    <select id="wrk-type">
+                        <option value="Tailor">Tailor</option>
+                        <option value="Interlock">Interlock</option>
+                        <option value="Finishing">Finishing</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Piece Rate (₹)</label><input type="number" id="wrk-rate" placeholder="0.00"></div>
+                <button onclick="saveWorker()">Save Worker</button>
+                <button type="button" onclick="openManager('workers')" style="background: #555; margin-top: 10px;">⚙️ Manage Workers</button>
+            </div>
+            <!-- CLIENT MASTER -->
+            <div class="modal-card" id="modal-clients">
+                <div class="modal-header">
+                    <h2>Add New Client</h2>
+                    <button class="close-modal" onclick="closeAllModals()">&times;</button>
+                </div>
+                <div class="form-group"><label>Client ID</label><input type="text" id="cli-id" placeholder="e.g., C-001"></div>
+                <div class="form-group"><label>Client Name</label><input type="text" id="cli-name"></div>
+                <div class="form-group"><label>Contact Info</label><input type="text" id="cli-contact" placeholder="Phone / Email"></div>
+                <button onclick="saveClient()">Save Client</button>
+                <button type="button" onclick="openManager('clients')" style="background: #555; margin-top: 10px;">⚙️ Manage Clients</button>
+            </div>
+    <div id="manager-modal" class="modal-card" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-btn" onclick="document.getElementById('manager-modal').style.display='none'">&times;</span>
+            <h2 id="manager-title">Manage Data</h2>
+            <div id="manager-body" style="overflow-x: auto; margin-top: 20px;">
+                </div>
+        </div>
+    </div>
+    <script type="module" src="transactions.js"></script>
+    <script type="module" src="masters.js"></script>
 </body>
 </html>
