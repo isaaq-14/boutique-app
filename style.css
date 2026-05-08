@@ -464,3 +464,33 @@ body.pdf-export-mode .split-grid {
             font-size: 22px;
             line-height: 1.2; /* Gives the heading a predictable height */
         }
+
+        /* --- TABLE ACTION BUTTONS FIX --- */
+.manager-table .action-btn {
+    width: auto !important;         /* Stops the button from stretching */
+    display: inline-block;          /* Allows them to sit side-by-side */
+    padding: 6px 12px;              /* Nice, tight internal spacing */
+    margin-right: 6px;              /* Space between the Edit and Delete buttons */
+    font-size: 13px;                /* Slightly smaller font for table rows */
+    white-space: nowrap;            /* Prevents the word "Delete" from wrapping to two lines */
+    border-radius: 4px;             /* Keeps the edges slightly rounded */
+}
+
+/* Optional: Remove the margin from the very last button so it doesn't push the cell wider */
+.manager-table .action-btn:last-child {
+    margin-right: 0;
+}
+
+/* Optional Colors if you want them to look distinct */
+.manager-table .edit-btn {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+.manager-table .del-btn {
+    background-color: #fff0f0;
+    color: #d32f2f;
+    border: 1px solid #ffcdd2;
+}
+

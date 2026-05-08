@@ -1,8 +1,14 @@
 import { db } from './firebase-config.js';
 import { 
-    collection, 
+   collection, 
     addDoc, 
-    serverTimestamp 
+    serverTimestamp,
+    doc,
+    updateDoc,
+    getDocs,
+    getDoc,
+    query,
+    where 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 window.saveArticle = async function () {
@@ -48,13 +54,14 @@ window.saveClient = async function () {
 };
 // 1. OPEN MANAGER & LOAD DATA
 window.openManager = async function (type) {
-    const modal = document.getElementById('manager-modal');
-    const title = document.getElementById('manager-title');
     const body = document.getElementById('manager-body');
+    const title = document.getElementById('manager-title');
 
-    modal.style.display = 'block';
-    body.innerHTML = '<p>Loading data from vault...</p>';
-
+    // 2. Open the modal
+    openModal('manager-modal');
+    
+    // 3. Set loading state
+    body.innerHTML = '<p style="padding: 20px; text-align: center;">Loading data from vault...</p>';
     // Configure settings based on what button was clicked
     let collectionName = '';
     let fields = [];
@@ -62,15 +69,15 @@ window.openManager = async function (type) {
     if (type === 'articles') {
         collectionName = 'master_articles';
         title.innerText = '⚙️ Manage Articles';
-        fields = [{ key: 'code', label: 'Article Code' }, { key: 'name', label: 'Article Name' }];
+        fields = [{ key: 'code', label: 'Article Code' }, { key: 'name', label: 'Article Name' },{key:'cost',label:'Cost'},{key:'price',label:'Price'}];
     } else if (type === 'workers') {
         collectionName = 'master_workers';
         title.innerText = '⚙️ Manage Workers';
-        fields = [{ key: 'name', label: 'Worker Name' }];
+        fields = [{ key: 'name', label: 'Worker Name' },{ key: 'rate', label: 'Piece Rate' }];
     } else if (type === 'clients') {
         collectionName = 'master_clients';
         title.innerText = '⚙️ Manage Clients';
-        fields = [{ key: 'name', label: 'Client Name' }, { key: 'phone', label: 'Phone Number' }];
+        fields = [{ key: 'name', label: 'Client Name' }, { key: 'contact', label: 'Contact Info' }];
     }
 
     try {

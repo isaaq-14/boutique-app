@@ -1,4 +1,3 @@
-
 console.log("Dashboard Script is starting..."); // ADD THIS
 import { db } from './firebase-config.js';
 console.log("Database connection successful:", db); // ADD THIS
@@ -184,9 +183,7 @@ window.openReceiptModal = function (categoryHead) {
     const receipts = window.currentReceiptsMap[categoryHead] || [];
     const grid = document.getElementById('modal-grid');
     document.getElementById('modal-title').innerText = `Receipts for ${categoryHead.replace('EXP-', '')}`;
-
     grid.innerHTML = '';
-
     if (receipts.length === 0) {
         grid.innerHTML = '<p>No receipts found for this category.</p>';
     } else {
@@ -205,7 +202,7 @@ window.openReceiptModal = function (categoryHead) {
         });
     }
 
-    document.getElementById('receipt-modal').style.display = 'flex';
+    openModal('receipt-modal');
 };
 // --- SIDEBAR & DROPDOWN LOGIC ---
 

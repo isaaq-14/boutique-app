@@ -430,3 +430,81 @@ window.updateFileName = function (input, textId) {
         displayText.style.fontWeight = "normal";
     }
 };
+
+import { getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// 1. Create a global array to hold the heavy data in memory
+window.currentReceiptData = []; 
+
+// This now expects two things when clicked: the folder name, and the title for the popup
+window.viewReceipts = async function(collectionName, categoryTitle) {
+    const grid = document.getElementById('modal-grid');
+    const title = document.getElementById('modal-title'); // We update the title dynamically now
+    
+    openModal('receipt-modal');
+    title.innerText = `${categoryTitle} Receipts`; 
+    grid.innerHTML = '<p style="text-align: center; width: 100%; padding: 20px;">Loading...</p>';
+
+    try {
+        // 1. Fetch ONLY the specific folder you clicked on
+        const querySnapshot = await getDocs(collection(db, collectionName));
+
+        if (querySnapshot.empty) {
+            grid.innerHTML = `<p style="text-align: center; width: 100%; color: #888;">No records found in ${categoryTitle}.</p>`;
+            return;
+        }
+
+        window.currentReceiptData = [];
+        let html = '';
+        const docs = querySnapshot.docs.reverse(); 
+
+        docs.forEach((doc) => {
+            const data = doc.data();
+            
+            // 2. Only show cards that actually have an image attached
+            if (data.receiptUrl) {
+                // Save to memory for the Image Viewer
+                const memoryIndex = window.currentReceiptData.length;
+                window.currentReceiptData.push(data);
+                
+                // Smart Name Detection (since different folders use different names)
+                let displayName = data.client || data.supplier || data.worker || data.name || data.head || 'Unknown';
+                let amount = data.amount || data.total || 0;
+
+                html += `
+                    <div class="receipt-card" style="cursor: pointer;" onclick="viewImage(${memoryIndex})">
+                        <div class="rcpt-client">${displayName}</div>
+                        <div class="rcpt-date">📅 ${data.date || 'No Date'}</div>
+                        <div class="rcpt-amount" style="font-weight: bold;">₹${amount}</div>
+                    </div>
+                `;
+            }
+        });
+
+        // 3. What if records exist, but no one uploaded a photo?
+        if (window.currentReceiptData.length === 0) {
+            grid.innerHTML = `<p style="text-align: center; width: 100%; color: #888;">Records exist, but no image proofs were attached.</p>`;
+            return;
+        }
+
+        grid.innerHTML = html;
+
+    } catch (error) {
+        console.error("Error loading specific receipts:", error);
+        grid.innerHTML = `<p style="color: red; text-align: center; width: 100%;">Error: ${error.message}</p>`;
+    }
+};
+
+// --- IMAGE VIEWER LOGIC (Remains the same!) ---
+window.viewImage = function(index) {
+    const receipt = window.currentReceiptData[index];
+    const url = receipt ? receipt.receiptUrl : null;
+
+    if (!url) { alert("No image attached!"); return; }
+
+    const displayImg = document.getElementById('modal-display-image');
+    if (displayImg) {
+        displayImg.src = url; 
+        openModal('modal-image-viewer');
+    }
+};
