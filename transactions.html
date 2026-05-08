@@ -48,7 +48,7 @@
                 <div class="form-group">
                     <label>Upload Receipt (Image)</label>
                     <label class="custom-file-upload">
-                        <input type="file" id="pur-receipt" accept="image/*" onchange="updateFileName(this, 'pur-file-name')">
+                        <input type="file" id="pur-receipt" accept="image/*" onchange="updateFileName(this, 'pur-file-name')" style="display: none;">
                         <span id="pur-file-name">📁 Click to select receipt...</span>
                     </label>
                 </div>
@@ -72,6 +72,13 @@
                 </div>
                 <div class="form-group"><label>Description / Note</label><input type="text" id="exp-desc" placeholder="E.g., April Bill"></div>
                 <div class="form-group"><label>Amount (₹)</label><input type="number" id="exp-amount" placeholder="0.00"></div>
+                <div class="form-group">
+                    <label>Upload Bill/Receipt (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="exp-receipt" accept="image/*" onchange="updateFileName(this, 'exp-file-name')" style="display: none;">
+                        <span id="exp-file-name">📁 Click to select bill...</span>
+                    </label>
+                </div>
                 <button onclick="saveExpense()">Record Expense</button>
             </div>
 
@@ -91,6 +98,13 @@
                     <div class="form-group" style="flex: 1;"><label>Qty Completed</label><input type="number" id="wp-qty" placeholder="0"></div>
                     <div class="form-group" style="flex: 1;"><label>Rate/Piece (₹)</label><input type="number" id="wp-rate" placeholder="0.00"></div>
                 </div>
+                <div class="form-group">
+                    <label>Upload Ledger/Proof (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="wp-receipt" accept="image/*" onchange="updateFileName(this, 'wp-file-name')" style="display: none;">
+                        <span id="wp-file-name">📁 Click to select receipt...</span>
+                    </label>
+                </div>
                 <button onclick="saveWorkerPayment()">Log Worker Payout</button>
             </div>
 
@@ -101,6 +115,13 @@
                 <div class="form-group"><label>Staff Name</label><input type="text" id="ss-name" placeholder="E.g., Manager"></div>
                 <div class="form-group"><label>Salary Month</label><input type="month" id="ss-month"></div>
                 <div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="ss-amount" placeholder="0.00"></div>
+                <div class="form-group">
+                    <label>Upload Payment Slip/Proof (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="ss-receipt" accept="image/*" onchange="updateFileName(this, 'ss-file-name')" style="display: none;">
+                        <span id="ss-file-name">📁 Click to select slip...</span>
+                    </label>
+                </div>
                 <button onclick="saveStaffSalary()">Log Salary Payout</button>
             </div>
             <!-- 5. SALES INVOICE (Step 8) -->
@@ -129,6 +150,13 @@
                         <label>Mode</label>
                         <select id="rec-mode"><option>Bank Transfer</option><option>UPI</option><option>Cash</option></select>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Upload Payment Screenshot/Proof (Image)</label>
+                    <label class="custom-file-upload">
+                        <input type="file" id="rec-receipt" accept="image/*" onchange="updateFileName(this, 'rec-file-name')" style="display: none;">
+                        <span id="rec-file-name">📁 Click to upload receipt...</span>
+                    </label>
                 </div>
                 <button onclick="saveReceipt()">Log Payment</button>
             </div>
@@ -194,7 +222,11 @@
             const date = document.getElementById('inv-date').value;
             const invoiceNo = document.getElementById('inv-no').value;
             const linkedSO = document.getElementById('inv-so').value;
-            const article = document.getElementById('inv-article').value;
+            
+            const articleSelect = document.getElementById('inv-article');
+            const articleCode = articleSelect.value; 
+            const articleFullName = articleSelect.options[articleSelect.selectedIndex].text; 
+            
             const qty = parseInt(document.getElementById('inv-qty').value);
             const rate = parseFloat(document.getElementById('inv-rate').value);
             
@@ -204,122 +236,136 @@
             const formatMoney = (amt) => '₹' + amt.toLocaleString('en-IN', {minimumFractionDigits: 2});
 
             // 1. Save to Database
-            await addDoc(collection(db, "erp_invoices"), { date, invoiceNo, linkedSO, article, qty, rate, total: totalAmount });
+            await addDoc(collection(db, "erp_invoices"), { date, invoiceNo, linkedSO, article: articleCode, qty, rate, total: totalAmount });
             
-            // 2. Secure Native PDF Generation
-            if(confirm("Invoice Saved! Download official PDF Receipt?")) {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+            // 2. Secure Native PDF Generation & Emailing
+            if(confirm("Invoice Saved! Generate PDF and send to Email?")) {
+                
+                // 🔴 THE FIX: Safely find the button by its onclick attribute
+                const btn = document.querySelector('button[onclick="saveInvoice()"]');
+                let originalText = "Record Invoice";
+                
+                if (btn) {
+                    originalText = btn.innerText;
+                    btn.innerText = "Generating & Emailing...";
+                    btn.disabled = true;
+                }
 
-                // Header
-                doc.setFontSize(22);
-                doc.text("MUGGUN BOUTIQUE", 105, 20, { align: "center" });
-                doc.setFontSize(12);
-                doc.setTextColor(100);
-                doc.text("Tax Invoice / Bill of Supply", 105, 28, { align: "center" });
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
 
-                // Meta Data
-                doc.setTextColor(0);
-                doc.setFontSize(10);
-                doc.text(`Invoice No: ${invoiceNo}`, 14, 45);
-                doc.text(`Date: ${new Date(date).toLocaleDateString('en-IN')}`, 14, 52);
-                doc.text(`Linked Order: ${linkedSO || 'N/A'}`, 196, 45, { align: "right" });
+                    // Header
+                    doc.setFontSize(22);
+                    doc.text("MUGGUN BOUTIQUE", 105, 20, { align: "center" });
+                    doc.setFontSize(12);
+                    doc.setTextColor(100);
+                    doc.text("Tax Invoice / Bill of Supply", 105, 28, { align: "center" });
 
-                // The Items Table
-                doc.autoTable({
-                    startY: 60,
-                    head: [['Article Code', 'Quantity', 'Rate', 'Total']],
-                    body: [
-                        [article, `${qty} Units`, formatMoney(rate), formatMoney(totalAmount)]
-                    ],
-                    theme: 'striped',
-                    headStyles: { fillColor: [46, 125, 50] }, // A nice dark green header
-                    foot: [['', '', 'Grand Total', formatMoney(totalAmount)]],
-                    footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
-                });
+                    // Meta Data
+                    doc.setTextColor(0);
+                    doc.setFontSize(10);
+                    doc.text(`Invoice No: ${invoiceNo}`, 14, 45);
+                    doc.text(`Date: ${new Date(date).toLocaleDateString('en-IN')}`, 14, 52);
+                    doc.text(`Linked Order: ${linkedSO || 'N/A'}`, 196, 45, { align: "right" });
 
-                // Footer Signature
-                const finalY = doc.lastAutoTable.finalY || 80;
-                doc.text("_________________________", 196, finalY + 40, { align: "right" });
-                doc.text("Authorized Signatory", 196, finalY + 47, { align: "right" });
+                    // The Items Table
+                    doc.autoTable({
+                        startY: 60,
+                        head: [['Article Description', 'Quantity', 'Rate', 'Total']],
+                        body: [[articleFullName, `${qty} Units`, formatMoney(rate), formatMoney(totalAmount)]],
+                        theme: 'striped',
+                        headStyles: { fillColor: [46, 125, 50] }, 
+                        foot: [['', '', 'Grand Total', formatMoney(totalAmount)]],
+                        footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
+                    });
 
-                // Download
-                doc.save(`${invoiceNo}_Muggun_Boutique.pdf`);
+                    // Footer Signature
+                    const finalY = doc.lastAutoTable.finalY || 80;
+                    doc.text("_________________________", 196, finalY + 40, { align: "right" });
+                    doc.text("Authorized Signatory", 196, finalY + 47, { align: "right" });
+
+                    // 1. Download locally
+                    doc.save(`${invoiceNo}_Muggun_Boutique.pdf`);
+
+                    // 2. Convert to text
+                    const pdfBase64 = doc.output('datauristring');
+
+                    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwu1WV6_fx8xFwKAWLdMajONVZK8fTFNa-NEksebgoVUnQOFS2Z06Fhu2PZLbC_L4imAw/exec";
+
+                    // 4. Send to Post Office
+                    await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain" },
+                        body: JSON.stringify({
+                            pdfData: pdfBase64,
+                            fileName: `${invoiceNo}_Muggun_Boutique.pdf`
+                        })
+                    });
+
+                    alert("Invoice generated and emailed successfully!");
+                } catch (error) {
+                    console.error("Email error:", error);
+                    alert("PDF generated, but email failed. Check console.");
+                } finally {
+                    // Reset button state
+                    if (btn) {
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                    }
+                }
             }
-
+            
             // 3. Clear the form
             document.querySelectorAll('#inv-no, #inv-so, #inv-qty, #inv-rate').forEach(el => el.value = '');
+            articleSelect.selectedIndex = 0; 
         };
 
-        window.saveReceipt = async function() {
+       window.saveReceipt = async function() {
             const date = document.getElementById('rec-date').value;
             const client = document.getElementById('rec-client').value;
             const invoiceNo = document.getElementById('rec-inv').value || 'Advance / Unlinked';
             const amount = parseFloat(document.getElementById('rec-amount').value);
             const mode = document.getElementById('rec-mode').value;
+            const fileInput = document.getElementById('rec-receipt');
             
             if (!client || isNaN(amount)) return alert("Fill required receipt fields.");
             
-            const formatMoney = (amt) => '₹' + amt.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Processing...";
+            btn.disabled = true;
 
-            // 1. Save to Database
-            await addDoc(collection(db, "erp_receipts"), { date, client, invoiceNo, amount, mode });
-            
-            // 2. Secure Native PDF Generation
-            if(confirm("Payment Logged! Download official PDF Receipt?")) {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+            try {
+                let receiptUrl = null;
+                
+                // Compress and encode the image if a screenshot is attached
+                if (fileInput.files.length > 0) {
+                    receiptUrl = await compressImage(fileInput.files[0]);
+                }
 
-                // Header
-                doc.setFontSize(22);
-                doc.text("MUGGUN BOUTIQUE", 105, 20, { align: "center" });
-                doc.setFontSize(12);
-                doc.setTextColor(100);
-                doc.text("Payment Receipt", 105, 28, { align: "center" });
-
-                // Meta Data
-                doc.setTextColor(0);
-                doc.setFontSize(10);
-                doc.text(`Date: ${new Date(date).toLocaleDateString('en-IN')}`, 14, 45);
-                doc.text(`Mode: ${mode}`, 14, 52);
-                doc.text(`Linked Invoice: ${invoiceNo}`, 196, 45, { align: "right" });
-
-                // Main Content Table
-                doc.autoTable({
-                    startY: 60,
-                    head: [['Received From', 'Amount']],
-                    body: [
-                        [client, formatMoney(amount)]
-                    ],
-                    theme: 'grid',
-                    headStyles: { fillColor: [46, 125, 50] }, // Dark green header
-                    bodyStyles: { fontSize: 14, fontStyle: 'bold', minCellHeight: 20, valign: 'middle' },
-                    columnStyles: { 1: { halign: 'right' } }
+                // Save to Database (Notice we completely removed the PDF code)
+                await addDoc(collection(db, "erp_receipts"), { 
+                    date, client, invoiceNo, amount, mode, receiptUrl 
                 });
 
-                // Thank you note
-                const finalY = doc.lastAutoTable.finalY || 80;
-                doc.setFontSize(10);
-                doc.setTextColor(100);
-                doc.setFont("helvetica", "italic");
-                doc.text("Thank you for your business!", 105, finalY + 15, { align: "center" });
-
-                // Footer Signatures
-                doc.setTextColor(0);
-                doc.setFont("helvetica", "normal");
+                alert("Payment Receipt Logged!");
                 
-                doc.text("_________________________", 14, finalY + 50);
-                doc.text("Customer Signature", 14, finalY + 57);
-
-                doc.text("_________________________", 196, finalY + 50, { align: "right" });
-                doc.text("Authorized Signatory", 196, finalY + 57, { align: "right" });
-
-                // Download
-                doc.save(`Receipt_${client.replace(/\s+/g, '_')}_${date}.pdf`);
+                // Clear the form
+                document.querySelectorAll('#rec-inv, #rec-amount').forEach(el => el.value = '');
+                fileInput.value = '';
+                document.getElementById('rec-file-name').innerText = "📁 Click to select proof...";
+                document.getElementById('rec-file-name').style.color = "#777";
+                
+            } catch (error) {
+                console.error("Save Error:", error);
+                alert("Error saving data. Check console.");
+            } finally {
+                if (btn) {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
             }
-
-            // 3. Clear the form
-            document.querySelectorAll('#rec-inv, #rec-amount').forEach(el => el.value = '');
         };
         // --- FREE BASE64 IMAGE COMPRESSOR ---
         const compressImage = (file) => {
@@ -394,10 +440,43 @@
             const head = document.getElementById('exp-head').value;
             const desc = document.getElementById('exp-desc').value;
             const amount = parseFloat(document.getElementById('exp-amount').value);
-            if (!desc || isNaN(amount)) return alert("Fill all expense fields.");
-            await addDoc(collection(db, "erp_expenses"), { date, head, desc, amount });
-            alert("Expense Logged!");
-            document.getElementById('exp-desc').value = ''; document.getElementById('exp-amount').value = '';
+            const fileInput = document.getElementById('exp-receipt');
+            
+            if (!desc || isNaN(amount)) return alert("Fill all required expense fields.");
+            
+            const btn = event.target;
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            try {
+                let receiptUrl = null;
+                
+                // Compress and encode the image if one is attached
+                if (fileInput.files.length > 0) {
+                    receiptUrl = await compressImage(fileInput.files[0]);
+                }
+
+                // Save to database
+                await addDoc(collection(db, "erp_expenses"), { 
+                    date, head, desc, amount, receiptUrl 
+                });
+
+                alert("Expense Logged!");
+                
+                // Clear the form
+                document.getElementById('exp-desc').value = ''; 
+                document.getElementById('exp-amount').value = '';
+                fileInput.value = '';
+                document.getElementById('exp-file-name').innerText = "📁 Click to select bill...";
+                document.getElementById('exp-file-name').style.color = "#777";
+                
+            } catch (error) {
+                console.error("Save Error:", error);
+                alert("Error saving data. Check console.");
+            } finally {
+                btn.innerText = "Record Expense";
+                btn.disabled = false;
+            }
         };
 
         window.saveWorkerPayment = async function() {
@@ -406,10 +485,43 @@
             const article = document.getElementById('wp-article').value;
             const qty = parseInt(document.getElementById('wp-qty').value);
             const rate = parseFloat(document.getElementById('wp-rate').value);
+            const fileInput = document.getElementById('wp-receipt');
+            
             if (!worker || !article || isNaN(qty) || isNaN(rate)) return alert("Fill all worker payment fields.");
-            await addDoc(collection(db, "erp_worker_payments"), { date, worker, article, qty, rate, total: qty * rate });
-            alert("Worker Payment Logged!");
-            document.getElementById('wp-qty').value = ''; document.getElementById('wp-rate').value = '';
+            
+            const btn = event.target;
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            try {
+                let receiptUrl = null;
+                
+                // Compress and encode the image if one is attached
+                if (fileInput.files.length > 0) {
+                    receiptUrl = await compressImage(fileInput.files[0]);
+                }
+
+                // Save to database
+                await addDoc(collection(db, "erp_worker_payments"), { 
+                    date, worker, article, qty, rate, total: qty * rate, receiptUrl 
+                });
+
+                alert("Worker Payment Logged!");
+                
+                // Clear the form
+                document.getElementById('wp-qty').value = ''; 
+                document.getElementById('wp-rate').value = '';
+                fileInput.value = '';
+                document.getElementById('wp-file-name').innerText = "📁 Click to select proof...";
+                document.getElementById('wp-file-name').style.color = "#777";
+                
+            } catch (error) {
+                console.error("Save Error:", error);
+                alert("Error saving data. Check console.");
+            } finally {
+                btn.innerText = "Log Worker Payout";
+                btn.disabled = false;
+            }
         };
 
         window.saveStaffSalary = async function() {
@@ -417,10 +529,43 @@
             const name = document.getElementById('ss-name').value;
             const month = document.getElementById('ss-month').value;
             const amount = parseFloat(document.getElementById('ss-amount').value);
-            if (!name || !month || isNaN(amount)) return alert("Fill all salary fields.");
-            await addDoc(collection(db, "erp_staff_salaries"), { date, name, month, amount });
-            alert("Salary Logged!");
-            document.getElementById('ss-name').value = ''; document.getElementById('ss-amount').value = '';
+            const fileInput = document.getElementById('ss-receipt');
+            
+            if (!name || !month || isNaN(amount)) return alert("Fill all required salary fields.");
+            
+            const btn = event.target;
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            try {
+                let receiptUrl = null;
+                
+                // Compress and encode the image if one is attached
+                if (fileInput.files.length > 0) {
+                    receiptUrl = await compressImage(fileInput.files[0]);
+                }
+
+                // Save to database
+                await addDoc(collection(db, "erp_staff_salaries"), { 
+                    date, name, month, amount, receiptUrl 
+                });
+
+                alert("Salary Logged!");
+                
+                // Clear the form
+                document.getElementById('ss-name').value = ''; 
+                document.getElementById('ss-amount').value = '';
+                fileInput.value = '';
+                document.getElementById('ss-file-name').innerText = "📁 Click to select slip...";
+                document.getElementById('ss-file-name').style.color = "#777";
+                
+            } catch (error) {
+                console.error("Save Error:", error);
+                alert("Error saving data. Check console.");
+            } finally {
+                btn.innerText = "Log Salary Payout";
+                btn.disabled = false;
+            }
         };
     // --- AUTO-FILL WORKER RATE ---
         document.getElementById('wp-worker').addEventListener('change', function() {
@@ -438,17 +583,29 @@
                 rateInput.value = ''; // Clears it if no worker is selected
             }
         });
-        // --- UPDATE FILE NAME ON CUSTOM UPLOAD BUTTON ---
+       // --- UPDATE FILE NAME & VALIDATE FILE TYPE ---
         window.updateFileName = function(input, textId) {
             const displayText = document.getElementById(textId);
+            
             if (input.files && input.files.length > 0) {
-                // Change text to the filename and turn it green to show success!
-                displayText.innerText = "📄 " + input.files[0].name;
+                const file = input.files[0];
+
+                // 🔴 THE BOUNCER: Check if it's actually an image
+                if (!file.type.startsWith('image/')) {
+                    alert("⚠️ Invalid file type! Please upload an image file (JPG, PNG, etc.).");
+                    input.value = ''; // Instantly kick the bad file out of the input
+                    displayText.innerText = "❌ Invalid File. Click to try again...";
+                    displayText.style.color = "#d32f2f"; // Turn text red
+                    return; // Stop the function here
+                }
+
+                // If it passes the bouncer, show success!
+                displayText.innerText = "📄 " + file.name;
                 displayText.style.color = "#2e7d32"; 
                 displayText.style.fontWeight = "bold";
             } else {
-                // Reset if they cancel
-                displayText.innerText = "📁 Click to select receipt...";
+                // Reset if they click cancel
+                displayText.innerText = "📁 Click to select file...";
                 displayText.style.color = "#777";
                 displayText.style.fontWeight = "normal";
             }
