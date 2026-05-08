@@ -107,29 +107,56 @@
             border: 1px solid #ccc;
             border-radius: 3px;
         }
+    /* --- DYNAMIC MODAL STYLING FOR MASTERS --- */
+        body {
+            background-color: rgba(0,0,0,0.7) !important; 
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            display: none; 
+            background: #fff;
+            width: 100%;
+            max-width: 600px; /* Made slightly wider for data tables */
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            max-height: 85vh; 
+            overflow-y: auto; 
+
+            /* --- THE NUCLEAR CENTERING OPTION --- */
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            margin: 0 !important; 
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            text-decoration: none;
+            color: #aaa;
+            font-weight: bold;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        
+        .close-popup:hover { color: #d32f2f; }
     </style>
 </head>
 <body>
 
-    <!-- Updated Navigation (Needs to be updated on all pages eventually) -->
-<nav class="top-nav">
-    <div class="nav-brand">MUGGUN BOUTIQUE</div>
-    <div class="nav-links">
-        <a href="index.html" class="nav-btn">Dashboard</a>
-        <a href="masters.html" class="nav-btn">Master Data</a>
-        <a href="production.html" class="nav-btn">Production</a>
-        <a href="transactions.html" class="nav-btn">Entry</a>
-    </div>
-</nav>
-
     <div class="container">
-        <h2 class="page-title">Master Data</h2>
-        <p style="color: #666; margin-bottom: 30px;">Define your core business entities here before logging operational transactions.</p>
-
         <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
             
             <!-- ARTICLE MASTER -->
-            <div class="card">
+            <div class="card" id="modal-articles">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Add New Article</h2>
                 <div class="form-group"><label>Article Code</label><input type="text" id="art-code" placeholder="e.g., MB-KUR-001"></div>
                 <div class="form-group"><label>Article Name</label><input type="text" id="art-name" placeholder="Kurti, Pajama, etc."></div>
@@ -149,7 +176,8 @@
                 <button type="button" onclick="openManager('articles')" style="background: #555; margin-top: 10px;">⚙️ Manage Articles</button>
             </div>
             <!-- WORKER MASTER -->
-            <div class="card">
+            <div class="card" id="modal-workers">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Add New Worker</h2>
                 <div class="form-group"><label>Worker ID</label><input type="text" id="wrk-id" placeholder="e.g., W-001"></div>
                 <div class="form-group"><label>Worker Name</label><input type="text" id="wrk-name"></div>
@@ -166,7 +194,8 @@
                 <button type="button" onclick="openManager('workers')" style="background: #555; margin-top: 10px;">⚙️ Manage Workers</button>
             </div>
             <!-- CLIENT MASTER -->
-            <div class="card">
+            <div class="card" id="modal-clients">
+                <a href="index.html" class="close-popup">&times;</a>
                 <h2>Add New Client</h2>
                 <div class="form-group"><label>Client ID</label><input type="text" id="cli-id" placeholder="e.g., C-001"></div>
                 <div class="form-group"><label>Client Name</label><input type="text" id="cli-name"></div>
@@ -194,7 +223,21 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        // --- URL HASH ROUTER FOR MASTERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.substring(1); 
+            
+            // Hide all master form cards
+            document.querySelectorAll('.card').forEach(card => card.style.display = 'none');
 
+            // Find the matching modal and show it
+            if (hash && document.getElementById(`modal-${hash}`)) {
+                document.getElementById(`modal-${hash}`).style.display = 'block';
+            } else {
+                // Failsafe: Default to Clients form if no hash is found
+                document.getElementById('modal-clients').style.display = 'block';
+            }
+        });
         window.saveArticle = async function() {
             const code = document.getElementById('art-code').value;
             const name = document.getElementById('art-name').value;

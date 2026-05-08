@@ -184,3 +184,131 @@ body.pdf-export-mode .action-cell {
 body.pdf-export-mode .split-grid {
     grid-template-columns: 1fr !important;
 }
+/* --- VERTICAL SIDEBAR & MOBILE HEADER --- */
+
+/* Mobile Header (Always visible on phone) */
+.mobile-header {
+    background: #ffffff;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.nav-brand { display: flex; align-items: center; gap: 8px; }
+.nav-brand h1 { font-family: 'Playfair Display', serif; margin: 0; font-size: 22px; color: #d4af37; }
+.menu-btn { background: none; border: none; font-size: 24px; color: #333; cursor: pointer; }
+
+/* The Sidebar Drawer */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; /* Hidden off-screen by default */
+    width: 260px;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar.open { left: 0; } /* Slides in when active */
+
+.sidebar-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.sidebar-header h2 { margin: 0; font-size: 18px; color: #000000; }
+.close-btn { background: none; border: none; font-size: 28px; color: #aaa; cursor: pointer; }
+
+/* Dark Overlay for Mobile */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 950;
+    display: none; /* Hidden by default */
+}
+.sidebar-overlay.open { display: block; }
+
+/* Sidebar Links */
+.sidebar-menu { padding: 15px 0; }
+.sidebar-menu a, .dropdown-btn {
+    display: block;
+    padding: 15px 20px;
+    color: #555;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    border-bottom: 1px solid #f9f9f9;
+    transition: background 0.2s;
+}
+.sidebar-menu a:hover, .sidebar-menu a.active, .dropdown-btn:hover { background: #fdfbf5; color: #000000; }
+
+/* Dropdown/Accordion Styling */
+.dropdown-btn {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.arrow { font-size: 10px; transition: transform 0.2s; }
+.arrow.rotate { transform: rotate(180deg); }
+
+.dropdown-content {
+    display: none; /* Hidden by default */
+    background: #fcfcfc;
+    border-left: 3px solid #dd1ff7;
+}
+.dropdown-content.show { display: block; } /* Shows when clicked */
+
+.dropdown-content a {
+    padding: 12px 20px 12px 40px; /* Indented to show it's a sub-menu */
+    font-size: 13px;
+    border-bottom: none;
+}
+
+/* Desktop Adjustments (Locked Sidebar for large screens) */
+        @media (min-width: 1024px) {
+            /* 1. Hide the mobile header and overlay completely */
+            .mobile-header, 
+            .sidebar-overlay, 
+            .sidebar-overlay.open { 
+                display: none !important; 
+            }
+            
+            /* 2. Lock the sidebar to the left */
+            .sidebar { 
+                left: 0 !important; 
+            } 
+            
+            /* 3. Hide the X button because the sidebar is permanent here */
+            .close-btn { 
+                display: none; 
+            } 
+            
+            /* 4. Push the dashboard over so it doesn't hide behind the sidebar */
+            .main-content { 
+                margin-left: 260px; 
+                padding: 20px; 
+            }
+        }

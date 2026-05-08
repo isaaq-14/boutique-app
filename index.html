@@ -86,16 +86,52 @@
     </style>
 </head>
 <body>
+    <header class="mobile-header">
+        <div class="nav-brand">
+            <span class="logo-icon">✨</span>
+            <h1>Muggun</h1>
+        </div>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    </header>
 
-    <nav class="top-nav">
-        <div class="nav-brand">MUGGUN BOUTIQUE</div>
-        <div class="nav-links">
-            <a href="index.html" class="nav-btn active">Dashboard</a>
-            <a href="masters.html" class="nav-btn">Master Data</a>
-            <a href="production.html" class="nav-btn">Production</a>
-            <a href="transactions.html" class="nav-btn">Entry</a>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="close-btn" onclick="toggleSidebar()">&times;</button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="index.html" class="active">Dashboard</a>
+            <div class="dropdown">
+                <button class="dropdown-btn" onclick="toggleDropdown()">
+                    Entry <span class="arrow" id="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-content" id="financials-menu">
+                    <a href="transactions.html#receipts">Record Incoming Payment</a>
+                    <a href="transactions.html#expenses">Record Shop Expense</a>
+                    <a href="transactions.html#materials">Record Material Purchase</a>
+                    <a href="transactions.html#salaries">Record Salary Payment</a>
+                    <a href="transactions.html#worker-payments">Record Worker Payment</a>
+                    <a href="transactions.html#sales">Generate Sales Invoice</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-btn" onclick="toggleMasterDropdown()">
+                    Master Data <span class="arrow" id="master-arrow">▼</span>
+                </button>
+                <div class="dropdown-content" id="master-menu">
+                    <a href="masters.html#clients">Manage Clients</a>
+                    <a href="masters.html#workers">Manage Workers</a>
+                    <a href="masters.html#articles">Manage Articles</a>
+                </div>
+            </div>
+            <a href="production.html">Production</a>
         </div>
     </nav>
+
+    <main class="main-content">
 
     <div class="container">
         
@@ -465,6 +501,27 @@
             }
             
             document.getElementById('receipt-modal').style.display = 'flex';
+        };
+        // --- SIDEBAR & DROPDOWN LOGIC ---
+        
+        // Opens/Closes the whole sidebar
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebar-overlay').classList.toggle('open');
+        };
+
+        // Opens/Closes the Financials dropdown
+        window.toggleDropdown = function() {
+            const menu = document.getElementById('financials-menu');
+            const arrow = document.getElementById('dropdown-arrow');
+            
+            menu.classList.toggle('show');
+            arrow.classList.toggle('rotate');
+        };
+        // Opens/Closes the Master Data dropdown
+        window.toggleMasterDropdown = function() {
+            document.getElementById('master-menu').classList.toggle('show');
+            document.getElementById('master-arrow').classList.toggle('rotate');
         };
         // Listeners (Added the erp_purchases listener here at the bottom)
         onSnapshot(collection(db, "sales_orders"), (snap) => { salesOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
