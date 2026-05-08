@@ -126,8 +126,23 @@
         .receipt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
         .receipt-card { border: 1px solid #ddd; padding: 8px; text-align: center; border-radius: 6px; background: #fafafa; }
         .receipt-card img { max-width: 100%; height: 150px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; }
-        .view-btn { cursor: pointer; background: none; border: none; font-size: 18px; margin-left: 8px; vertical-align: middle; transition: transform 0.2s; }
-        .view-btn:hover { transform: scale(1.2); }
+        .view-btn { 
+            cursor: pointer; 
+            background: transparent !important; 
+            border: none !important; 
+            font-size: 18px; 
+            margin-left: 8px; 
+            vertical-align: middle; 
+            transition: transform 0.2s;
+            width: auto !important;
+            min-width: 0 !important;
+            padding: 0 4px !important;
+            box-shadow: none !important;
+            color: inherit !important;
+        }
+        .view-btn:hover { 
+            transform: scale(1.3); 
+        }
     </style>
 
     <div class="modal-overlay" id="receipt-modal">
