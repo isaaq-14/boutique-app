@@ -1,6 +1,5 @@
 import { db } from './firebase-config.js';
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+import { getFirestore, collection, addDoc, query, where, getDocs, updateDoc, doc, onSnapshot, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 // Auto-fill today's dates
 const today = new Date().toISOString().slice(0, 10);
 document.querySelectorAll('input[type="date"]').forEach(el => el.value = today);
@@ -35,6 +34,48 @@ onSnapshot(collection(db, "master_clients"), (snap) => {
     snap.docs.forEach(doc => { const c = doc.data(); opts += `<option value="${c.name}">${c.name}</option>`; });
     document.getElementById('rec-client').innerHTML = opts;
 });
+
+// --- PULL ACTIVE JOBS FOR WORKER LOG ---
+onSnapshot(query(collection(db, "production_orders"), where("status", "==", "In Progress")), (snap) => {
+    let opts = '<option value="">-- Select Active Job --</option>';
+    
+    snap.docs.forEach(doc => {
+        const job = doc.data();
+        // Label looks like: "Taufiq - red shirt [90] (40 units left)"
+        const label = `${job.worker} - ${job.article} (${job.qty} units left)`;
+        opts += `<option value="${doc.id}">${label}</option>`;
+    });
+
+    const jobDrop = document.getElementById('pay-worker-job');
+    if (jobDrop) jobDrop.innerHTML = opts;
+});
+
+onSnapshot(collection(db, "sales_orders"), (snap) => {
+    let opts = '<option value="">-- Select Linked Order --</option>';
+    
+    // Sort them so the newest orders appear at the top of the list
+    const docs = snap.docs.reverse(); 
+    
+    // THE FIX: Filter out completed orders before looping
+    docs
+        .filter(doc => doc.data().status !== 'Completed') 
+        .forEach(doc => { 
+            const so = doc.data(); 
+            
+            // Grab the Order Number (or use the Firebase ID if there isn't one)
+            const orderNo = so.orderNo || so.code || doc.id; 
+            
+            // Build a nice readable label for the dropdown: "SO-101 (Sarah) - 50 Units"
+            const label = `${orderNo} (${so.client || 'Unknown'}) - ${so.qty || 0} Units`;
+            
+            opts += `<option value="${orderNo}">${label}</option>`; 
+        });
+    
+    const soDropdown = document.getElementById('inv-so');
+    if (soDropdown) {
+        soDropdown.innerHTML = opts;
+    }
+});
 // Note: You can reuse the existing 'wp-article' snapshot to also fill 'inv-article' by adding:
 // document.getElementById('inv-article').innerHTML = opts; inside the master_articles snapshot.
 
@@ -50,14 +91,48 @@ window.saveInvoice = async function () {
     const qty = parseInt(document.getElementById('inv-qty').value);
     const rate = parseFloat(document.getElementById('inv-rate').value);
 
-    if (!invoiceNo || isNaN(qty) || isNaN(rate)) return alert("Fill required invoice fields.");
+    if (!invoiceNo || !linkedSO || isNaN(qty) || isNaN(rate)) {
+        return alert("⚠️ Please select a Linked Sales Order and fill all required fields!");
+    }
 
     const totalAmount = qty * rate;
     const formatMoney = (amt) => '₹' + amt.toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
     // 1. Save to Database
     await addDoc(collection(db, "erp_invoices"), { date, invoiceNo, linkedSO, article: articleCode, qty, rate, total: totalAmount });
-
+    // ==========================================
+        // NEW LOGIC: DEPLETE LINKED SALES ORDER
+        // ==========================================
+        if (linkedSO && linkedSO !== "") {
+            // 1. Find the specific Sales Order in the database
+            const soQuery = query(collection(db, "sales_orders"), where("orderNo", "==", linkedSO));
+            const soSnap = await getDocs(soQuery);
+            
+            if (!soSnap.empty) {
+                const soDoc = soSnap.docs[0]; // Get the first matching order
+                const soData = soDoc.data();
+                
+                // 2. Calculate the remaining quantity
+                const currentQty = soData.qty || 0;
+                const invoicedQty = parseInt(qty); // The qty you just typed into the invoice form
+                const newQty = currentQty - invoicedQty;
+                
+                // 3. Update the database
+                if (newQty <= 0) {
+                    // Order is fully delivered! Set to 0 and mark Completed.
+                    await updateDoc(doc(db, "sales_orders", soDoc.id), {
+                        qty: 0,
+                        status: 'Completed'
+                    });
+                } else {
+                    // Order is partially delivered. Just update the new remaining quantity.
+                    await updateDoc(doc(db, "sales_orders", soDoc.id), {
+                        qty: newQty
+                    });
+                }
+            }
+        }
+        // ==========================================
     // 2. Secure Native PDF Generation & Emailing
     if (confirm("Invoice Saved! Generate PDF and send to Email?")) {
 
@@ -325,6 +400,36 @@ window.saveWorkerPayment = async function () {
         await addDoc(collection(db, "erp_worker_payments"), {
             date, worker, article, qty, rate, total: qty * rate, receiptUrl
         });
+        // ==========================================
+        // DIAGNOSTIC VERSION: DEPLETE PRODUCTION JOB
+        // ==========================================
+        const linkedJobId = document.getElementById('pay-worker-job')?.value || "";
+        const completedQty = parseInt(document.getElementById('wp-qty')?.value || 0);
+
+        console.log("Attempting depletion. Job ID:", linkedJobId, "Qty:", completedQty);
+
+        if (linkedJobId && linkedJobId !== "") {
+            const jobRef = doc(db, "production_orders", linkedJobId);
+            const jobSnap = await getDoc(jobRef); 
+
+            if (jobSnap.exists()) {
+                const jobData = jobSnap.data();
+                const currentTargetQty = Number(jobData.qty || 0); // Force to number
+                const newTargetQty = currentTargetQty - completedQty;
+
+                console.log("Current Qty in DB:", currentTargetQty, "New Qty will be:", newTargetQty);
+
+                if (newTargetQty <= 0) {
+                    await updateDoc(jobRef, { qty: 0, status: 'Completed' });
+                    console.log("Job marked as Completed.");
+                } else {
+                    await updateDoc(jobRef, { qty: newTargetQty });
+                    console.log("Job quantity updated successfully.");
+                }
+            } else {
+                console.error("COULD NOT FIND THE JOB IN DATABASE!");
+            }
+        }
 
         alert("Worker Payment Logged!");
 
@@ -430,8 +535,6 @@ window.updateFileName = function (input, textId) {
         displayText.style.fontWeight = "normal";
     }
 };
-
-import { getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // 1. Create a global array to hold the heavy data in memory
 window.currentReceiptData = []; 

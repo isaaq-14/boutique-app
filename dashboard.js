@@ -5,23 +5,49 @@ import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/
 // Data Storage (Added 'purchases' array here)
 let salesOrders = [], prodOrders = [], workers = [], expenses = [], invoices = [], receipts = [], purchases = [], salaries = [];
 let articles = [];
-const formatMoney = (amount) => '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function formatMoney(amount) {
+    // If amount is undefined, null, or not a number, return ₹0.00
+    if (isNaN(amount) || amount === null || amount === undefined) {
+        return "₹0.00";
+    }
+    // Force to a number before formatting
+    return Number(amount).toLocaleString('en-IN', {
+        style: 'currency',
+        currency: 'INR'
+    });
+}
 
 const today = new Date();
-document.getElementById('view-month').value = today.toISOString().slice(0, 7);
+// document.getElementById('view-month').value = today.toISOString().slice(0, 7);
 
 window.renderDashboard = async function () {
-    const selectedMonth = document.getElementById('view-month').value;
+    // 1. Get the Range Values from your new inputs
+    const startVal = document.getElementById('filter-start').value; // e.g., "2026-01"
+    const endVal = document.getElementById('filter-end').value;     // e.g., "2026-12"
 
-    // Filter ALL data by month
-    const mSO = salesOrders.filter(x => x.date && x.date.startsWith(selectedMonth));
-    const mPO = prodOrders.filter(x => x.date && x.date.startsWith(selectedMonth));
-    const mWorkers = workers.filter(x => x.date && x.date.startsWith(selectedMonth));
-    const mExpenses = expenses.filter(x => x.date && x.date.startsWith(selectedMonth));
-    const mInvoices = invoices.filter(x => x.date && x.date.startsWith(selectedMonth));
-    const mReceipts = receipts.filter(x => x.date && x.date.startsWith(selectedMonth));
-    const mPurchases = purchases.filter(x => x.date && x.date.startsWith(selectedMonth));
-    const mSalaries = salaries.filter(x => x.date && x.date.startsWith(selectedMonth));
+    // Safety check: if inputs are empty, don't run the filters
+    if (!startVal || !endVal) return;
+
+    // --- NEW RANGE-BASED FILTERS ---
+
+    // 1. Sales Orders & Production (With Status Checks)
+    const mSO = salesOrders.filter(x => {
+        const month = x.date ? x.date.substring(0, 7) : "";
+        return month >= startVal && month <= endVal && x.qty > 0 && x.status !== 'Completed';
+    });
+
+    const mPO = prodOrders.filter(x => {
+        const month = x.date ? x.date.substring(0, 7) : "";
+        return month >= startVal && month <= endVal && x.qty > 0 && x.status !== 'Completed';
+    });
+
+    // 2. The Rest of the Financial Data
+    const mWorkers   = workers.filter(x => x.date?.substring(0, 7) >= startVal && x.date?.substring(0, 7) <= endVal);
+    const mExpenses  = expenses.filter(x => x.date?.substring(0, 7) >= startVal && x.date?.substring(0, 7) <= endVal);
+    const mInvoices  = invoices.filter(x => x.date?.substring(0, 7) >= startVal && x.date?.substring(0, 7) <= endVal);
+    const mReceipts  = receipts.filter(x => x.date?.substring(0, 7) >= startVal && x.date?.substring(0, 7) <= endVal);
+    const mPurchases = purchases.filter(x => x.date?.substring(0, 7) >= startVal && x.date?.substring(0, 7) <= endVal);
+    const mSalaries  = salaries.filter(x => x.date?.substring(0, 7) >= startVal && x.date?.substring(0, 7) <= endVal);
 
     // --- NEW SAFE HELPER ---
     // Failsafe: Ensures the app never crashes if the 'articles' array isn't loaded yet
@@ -178,6 +204,59 @@ window.renderDashboard = async function () {
                     </td>
                 </tr>`;
     });
+    // ==========================================
+    // --- REPORT E: ACTIVE SALES ORDERS ---
+    // ==========================================
+    const soTbody = document.getElementById('dash-so-list');
+    if (soTbody) {
+        let soHtml = ''; // 1. Create a blank canvas
+        
+        if (mSO.length === 0) {
+            soHtml = '<tr><td colspan="5" style="text-align:center; color:#888;">No sales orders.</td></tr>';
+        } else {
+            mSO.forEach(so => {
+                const total = (so.qty || 0) * (so.rate || 0);
+                soHtml += `
+                    <tr>
+                        <td><strong>${so.orderNo || 'N/A'}</strong></td>
+                        <td>${so.client || 'Unknown'}</td>
+                        <td>${formatArticleName(so.article)}</td>
+                        <td>${so.qty || 0}</td>
+                        <td style="text-align: right; color: #2e7d32; font-weight: bold;">${formatMoney(total)}</td>
+                    </tr>
+                `;
+            });
+        }
+        soTbody.innerHTML = soHtml; // 2. Stamp it to the screen all at once!
+    }
+
+    // ==========================================
+    // --- REPORT F: FACTORY FLOOR STATUS ---
+    // ==========================================
+    const poTbody = document.getElementById('dash-po-list');
+    if (poTbody) {
+        let poHtml = ''; // 1. Create a blank canvas
+        
+        if (mPO.length === 0) {
+            poHtml = '<tr><td colspan="4" style="text-align:center; color:#888;">No production jobs active.</td></tr>';
+        } else {
+            mPO.forEach(po => {
+                const dateStr = po.date ? new Date(po.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'No Date';
+                poHtml += `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td><strong>${po.worker || 'Unassigned'}</strong></td>
+                        <td>
+                            ${formatArticleName(po.article)}<br>
+                            <span style="font-size: 11px; color: #888; text-transform: uppercase;">Link: ${po.linkedSO || 'Stock'}</span>
+                        </td>
+                        <td>${po.qty || 0} units</td>
+                    </tr>
+                `;
+            });
+        }
+        poTbody.innerHTML = poHtml; // 2. Stamp it to the screen!
+    }
 };
 window.openReceiptModal = function (categoryHead) {
     const receipts = window.currentReceiptsMap[categoryHead] || [];
@@ -224,6 +303,17 @@ window.toggleDropdown = function () {
 window.toggleMasterDropdown = function () {
     document.getElementById('master-menu').classList.toggle('show');
     document.getElementById('master-arrow').classList.toggle('rotate');
+};
+
+// Opens/Closes the Production dropdown
+window.toggleProductionDropdown = function () {
+    const menu = document.getElementById('production-menu');
+    const arrow = document.getElementById('production-arrow');
+    
+    if (menu && arrow) {
+        menu.classList.toggle('show');
+        arrow.classList.toggle('rotate');
+    }
 };
 // Listeners (Added the erp_purchases listener here at the bottom)
 onSnapshot(collection(db, "sales_orders"), (snap) => { salesOrders = snap.docs.map(d => d.data()); window.renderDashboard(); });
@@ -284,3 +374,20 @@ window.closeAllModals = function () {
         card.classList.remove('show');
     });
 };
+
+function setDefaultDates() {
+    const startInput = document.getElementById('filter-start');
+    const endInput = document.getElementById('filter-end');
+
+    if (startInput && endInput && !startInput.value) { // Only set if empty!
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        startInput.value = currentMonth;
+        endInput.value = currentMonth;
+        
+        // This is the ONLY time we trigger a render from here
+        renderDashboard(); 
+    }
+}
+
+// Only trigger on load
+window.addEventListener('DOMContentLoaded', setDefaultDates);
